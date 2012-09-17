@@ -1,0 +1,6 @@
+*~
+.DS_Store
+test/db
+*.old
+*.bak
+node_modules

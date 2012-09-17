@@ -1,0 +1,31 @@
+{
+  "name": "seneca-vcache",
+  "version": "0.0.0",
+  "description": "memcached plugin for seneca",
+  "main": "lib/vcache.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": "",
+  "keywords": [
+    "seneca",
+    "vcache",
+    "cache",
+    "memcached",
+    "plugin"
+  ],
+  "author": "Richard Rodger",
+  "license": "BSD",
+
+  "dependencies": {
+    "underscore": ">=1.1.4",
+    "memcached": "0.0.10",
+    "lru-cache": "2.0.3"
+  },
+
+  "devDependencies": {
+    "vows":"*",
+    "async":"*",
+    "eyes":"*"
+  }
+}
