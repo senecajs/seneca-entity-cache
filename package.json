@@ -1,7 +1,7 @@
 {
   "name": "seneca-vcache",
-  "version": "0.0.0",
-  "description": "memcached plugin for seneca",
+  "version": "0.1.0",
+  "description": "versioned caching plugin for seneca",
   "main": "lib/vcache.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
@@ -19,13 +19,16 @@
 
   "dependencies": {
     "underscore": ">=1.1.4",
-    "memcached": "0.0.10",
-    "lru-cache": "2.0.3"
+    "memcached": ">=0.0.10",
+    "lru-cache": ">=2.0.3",
+    "seneca-memcached":  ">=0.1.0",
   },
 
   "devDependencies": {
     "vows":"*",
     "async":"*",
     "eyes":"*"
-  }
+  },
+
+  "files": ["LICENSE.txt","README.md","lib"]
 }
