@@ -1,6 +1,7 @@
 "use strict";
 
 
+var assert  = require('assert')
 var connect = require('connect')
 
 var seneca = require('seneca')()
@@ -12,6 +13,18 @@ seneca.use('mongo-store',{
 seneca.use('memcached')
 seneca.use('..')
 
+
+seneca.ready( function() {
+  var foo = seneca.make('foo',{a:1})
+
+  foo.load$({a:1},ef(function(f1){
+    if( f1 ) { f1.remove$(ef()) }
+  }))
+
+  foo.load$({a:2},ef(function(f1){
+    if( f1 ) { f1.remove$(ef()) }
+  }))
+})
 
 var app = connect()
 
@@ -31,15 +44,32 @@ app.listen(3001)
 function ef(win) {
   return function(err,out) {
     if( err ) return console.log(err);
-    win(out)
+    win && win(out)
   }
+}
+
+
+function wait(s,f) {
+  console.log('WAIT '+s)
+  setTimeout(f,s*1000)
 }
 
 
 function run_test() {
 
   var f1 = seneca.make('foo',{a:1})
-  f1.save$(ef(function(f1){
 
-  }))
+  ;f1.save$(ef(function(f1){
+    assert.ok(null!=f1)
+
+  ;wait( 2, function(){
+    console.log('AAA')
+
+  ;f1.load$(f1.id,ef(function(f1){
+    assert.ok(null!=f1)
+    assert.equal(2,f1.a)
+
+  ;seneca.act('plugin:vcache, cmd:stats')
+
+  })) }) }))
 }

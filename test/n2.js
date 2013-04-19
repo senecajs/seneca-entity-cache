@@ -1,6 +1,7 @@
 "use strict";
 
 
+var assert  = require('assert')
 var request = require('request')
 
 var seneca = require('seneca')()
@@ -39,11 +40,19 @@ function run_test() {
 
   var foo = seneca.make('foo')
   
-  ;wait( 5, function(){
+  ;wait( 1, function(){
     
   ;foo.load$({a:1},ef(function(f1){
+    assert.ok(null!=f1)
 
   ;foo.load$(f1.id,ef(function(f1){
+    assert.ok(null!=f1)
+    assert.equal(1,f1.a)
 
-  })) })) })
+    f1.a=2
+  ;f1.save$(ef(function(f1){
+    
+  ;seneca.act('plugin:vcache, cmd:stats')
+
+  })) })) })) })
 }
