@@ -21,7 +21,7 @@ This is plays nicely with multiple memcached instances, and allows Seneca apps t
 If you're using this module, feel free to contact me on twitter if you
 have any questions! :) [@rjrodger](http://twitter.com/rjrodger)
 
-Current Version: 0.2.0
+Current Version: 0.2.1
 
 Tested on: node 0.8.16, seneca 0.5.6
 
