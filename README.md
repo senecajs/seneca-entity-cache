@@ -7,9 +7,11 @@ It provides a data caching mechanism for [Seneca data entities](http://senecajs.
 Using this module will give your Seneca app a big performance boost.
 
 The caching mechanism goes beyond simple key-based caching using
-memcached.  In addition a smaller "hot" cache is maintained within the
+memcached.  In addition, a smaller "hot" cache is maintained within the
 Node process. Data entities are given transient version numbers, and
 these are used to synchronize the hot cache with memcached.
+
+This is plays nicely with multiple memcached instances, and allows Seneca apps to scale.
 
 (See <a href="http://www.amazon.com/Beginning-Mobile-Application-Development-Cloud/dp/1118034694">chapter 8 of my book for details</a>, or read <i><a href="http://37signals.com/svn/posts/3113-how-key-based-cache-expiration-works">How key-based cache expiration works</a></i>)
 
