@@ -29,7 +29,9 @@
     "seneca": ">=0.5.9",
     "seneca-mongo-store": ">=0.1.5",
     "connect": "~2.7.6",
-    "request": "~2.16.6"
+    "request": "~2.16.6",
+    "seneca-redis-cache": "0.0.2",
+    "seneca-memcached-cache": "0.0.4"
   },
   "files": [
     "LICENSE.txt",
