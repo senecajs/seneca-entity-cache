@@ -11,7 +11,7 @@ var shared = seneca.test.store.shared
 
 
 var si = seneca()
-si.use('memcached')
+si.use('memcached-cache')
 si.use(require('..'))
 
 

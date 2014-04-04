@@ -83,7 +83,7 @@ Where:
 
 ```bash
 cd test
-mocha store.test.js --seneca.log.print
+mocha *.test.js --seneca.log.print
 ```
 
 Also
