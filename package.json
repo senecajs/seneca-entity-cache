@@ -1,6 +1,6 @@
 {
   "name": "seneca-vcache",
-  "version": "0.2.3",
+  "version": "0.3.0",
   "description": "versioned caching plugin for seneca",
   "main": "lib/vcache.js",
   "scripts": {
@@ -21,17 +21,17 @@
   "author": "Richard Rodger (http://richardrodger.com)",
   "license": "MIT",
   "dependencies": {
-    "underscore": "1.4.4",
-    "lru-cache": "2.3.x",
-    "seneca-memcached": ">=0.2.1"
+    "underscore": "~1.6.0",
+    "lru-cache": "~2.5.0"
   },
   "devDependencies": {
-    "seneca": ">=0.5.9",
-    "seneca-mongo-store": ">=0.1.5",
-    "connect": "~2.7.6",
-    "request": "~2.16.6",
-    "seneca-redis-cache": "0.0.2",
-    "seneca-memcached-cache": "0.0.4"
+    "connect": "~3.2.0",
+    "request": "~2.45.0",
+    "seneca": "~0.5.21",
+    "seneca-memcached-cache": "~0.1.0",
+    "seneca-jsonfile-store": "~0.1.9",
+    "seneca-redis-cache": "~0.1.0",
+    "seneca-store-test": "~0.2.2"
   },
   "files": [
     "LICENSE.txt",

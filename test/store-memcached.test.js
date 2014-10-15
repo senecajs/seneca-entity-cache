@@ -1,4 +1,4 @@
-/* Copyright (c) 2010-2013 Richard Rodger */
+/* Copyright (c) 2010-2014 Richard Rodger */
 "use strict";
 
 
@@ -6,13 +6,13 @@ var assert = require('assert')
 
 
 var seneca = require('seneca')
-var shared = seneca.test.store.shared
+var shared = require('seneca-store-test')
 
 
 
-var si = seneca()
+var si = seneca({log:'silent'})
 si.use('memcached-cache')
-si.use(require('..'))
+si.use('..')
 
 
 si.__testcount = 0

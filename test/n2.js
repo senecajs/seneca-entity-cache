@@ -5,12 +5,8 @@ var assert  = require('assert')
 var request = require('request')
 
 var seneca = require('seneca')()
-seneca.use('mongo-store',{
-  name:'senecatest',
-  host:'127.0.0.1',
-  port:27017,
-})
-seneca.use('memcached')
+seneca.use('jsonfile-store',{folder:__dirname+'/data'})
+seneca.use('memcached-cache')
 seneca.use('..')
 
 
@@ -26,7 +22,7 @@ function ef(win) {
 
 function wait(s,f) {
   console.log('WAIT '+s)
-  setTimeout(f,s*1000)
+  setTimeout(f,s*100)
 }
 
 
@@ -52,7 +48,7 @@ function run_test() {
     f1.a=2
   ;f1.save$(ef(function(f1){
     
-  ;seneca.act('plugin:vcache, cmd:stats')
+  ;seneca.act('plugin:vcache, cmd:stats',console.log)
 
   })) })) })) })
 }

@@ -6,11 +6,11 @@ var assert = require('assert')
 
 
 var seneca = require('seneca')
-var shared = seneca.test.store.shared
+var shared = require('seneca-store-test')
 
 
 
-var si = seneca()
+var si = seneca({log:'silent'})
 si.use('redis-cache')
 si.use(require('..'))
 
