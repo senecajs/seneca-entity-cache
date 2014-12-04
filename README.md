@@ -33,7 +33,7 @@ This module works by wrapping the data entity actions (<i>role:entity, cmd:save,
 
 ```JavaScript
 var seneca = require('seneca')()
-seneca.use('memcached')
+seneca.use('memcached-cache')
 seneca.use('vcache')
 ```
 
@@ -44,13 +44,15 @@ Then just use data entities as normal. Except things will be a lot faster.
 
 ```sh
 npm install seneca
-npm install seneca-memcached
+npm install seneca-memcached-cache
 npm install seneca-vcache
 ```
 
-You'll need the <a href="https://github.com/rjrodger/seneca-memcached">seneca-memcached</a> plugin as a dependency.
+You'll need the <a href="https://github.com/darsee/seneca-memcached-cache">seneca-memcached-cache</a> plugin as a dependency.
 
-You'll also need [memcached](http://memecached.org/)
+You'll also need [memcached](http://memcached.org/)
+
+Or... you can use <a href="http://redis.io">redis</a>: <a href="https://github.com/darsee/seneca-redis-cache">seneca-redis-cache</a>.
 
 
 ## Actions
