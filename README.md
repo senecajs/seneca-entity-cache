@@ -21,9 +21,11 @@ This is plays nicely with multiple memcached instances, and allows Seneca apps t
 If you're using this module, feel free to contact me on twitter if you
 have any questions! :) [@rjrodger](http://twitter.com/rjrodger)
 
-Current Version: 0.3.0
+Current Version: 0.3.1
 
 Tested on: Node 0.10.31, Seneca 0.5.21
+
+[![Build Status](https://travis-ci.org/rjrodger/seneca-vcache.png?branch=master)](https://travis-ci.org/rjrodger/seneca-vcache)
 
 
 
