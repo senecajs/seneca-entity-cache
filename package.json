@@ -1,6 +1,6 @@
 {
   "name": "seneca-vcache",
-  "version": "0.3.1",
+  "version": "0.3.2",
   "description": "versioned caching plugin for seneca",
   "main": "lib/vcache.js",
   "scripts": {
