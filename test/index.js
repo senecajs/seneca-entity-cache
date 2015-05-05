@@ -26,7 +26,7 @@ it('writes then reads a record', function (done) {
     seneca.use('memcached-cache');
     seneca.use('..');
 
-    seneca.ready(function () {
+    internals.ready(seneca, function () {
 
         var type = internals.type();
         var entry = seneca.make(type, { a: 1 });
@@ -121,7 +121,7 @@ it('updates a record', function (done) {
     seneca.use('memcached-cache');
     seneca.use('..');
 
-    seneca.ready(function () {
+    internals.ready(seneca, function () {
 
         var type = internals.type();
         var entry = seneca.make(type, { a: 1 });
@@ -283,7 +283,7 @@ describe('load()', function () {
         var seneca = Seneca({ log: 'silent' });
         seneca.use('memcached-cache');
 
-        seneca.ready(function () {
+        internals.ready(seneca, function () {
 
             var type = internals.type();
             var entry = seneca.make(type, { a: 1 });
@@ -344,7 +344,7 @@ describe('load()', function () {
         seneca.use('memcached-cache');
         seneca.use('..', { maxhot: 1 });
 
-        seneca.ready(function () {
+        internals.ready(seneca, function () {
 
             var type = internals.type();
             var entry = seneca.make(type, { a: 1 });
@@ -414,7 +414,7 @@ describe('load()', function () {
         seneca.use('memcached-cache');
         seneca.use('..', { maxhot: 1 });
 
-        seneca.ready(function () {
+        internals.ready(seneca, function () {
 
             var type = internals.type();
             var entry = seneca.make(type, { a: 1 });
@@ -517,7 +517,7 @@ describe('list()', function () {
         seneca.use('memcached-cache');
         seneca.use('..');
 
-        seneca.ready(function () {
+        internals.ready(seneca, function () {
 
             var entry = seneca.make('foo', { a: 5 });
             entry.list$(function (err, list) {
@@ -534,4 +534,13 @@ describe('list()', function () {
 internals.type = function () {
 
     return Crypto.randomBytes(8).toString('hex') + Date.now();
+};
+
+
+internals.ready = function (seneca, callback) {
+
+    seneca.ready(function () {
+
+        setImmediate(callback);             // Bypasses the try..catch operation in ready()
+    });
 };
