@@ -239,6 +239,50 @@ it('updates a record', function (done) {
   });
 });
 
+describe('save()', function () {
+
+  it('handles errors in upstream cache (incr)', function (done) {
+
+    var seneca = Seneca({ log: 'silent' });
+    seneca.use('./broken', { incr: true });
+    seneca.use('..');
+
+    internals.ready(seneca, function () {
+
+      var type = internals.type();
+      var entry = seneca.make(type, { a: 1 });
+
+      // Save
+
+      entry.save$(function (err, saved) {
+
+        expect(err).to.exist();
+
+        seneca.act('plugin:vcache, cmd:stats', function (err, stats) {
+
+          expect(stats).to.contain({
+            set: 0,
+            get: 0,
+            vinc: 0,
+            vadd: 0,
+            vmiss: 0,
+            vhit: 0,
+            lru_hit: 0,
+            net_hit: 0,
+            lru_miss: 0,
+            net_miss: 0,
+            drop: 0,
+            write_errs: 0,
+            hotsize: 0
+          });
+
+          done();
+        });
+      });
+    });
+  });
+});
+
 describe('load()', function () {
 
   it('reports miss when item not found', function (done) {
@@ -525,6 +569,99 @@ describe('list()', function () {
         expect(err).to.not.exist();
         expect(list.length).to.equal(0);
         done();
+      });
+    });
+  });
+});
+
+describe('registerHandlers()', function () {
+
+  it('registers plugin with entities setting (object)', function (done) {
+
+    var seneca = Seneca({ log: 'silent' });
+    seneca.use('memcached-cache');
+    seneca.use('..', { entities: [{ base: 'test' }] });
+
+    var entry = seneca.make('test', 'foo', { a: 4 });
+    entry.save$(function (err, saved) {
+
+      var outside = seneca.make('foo', { a: 4 });
+      outside.save$(function (err, outsideSaved) {
+
+        expect(err).to.not.exist();
+        seneca.act('plugin:vcache, cmd:stats', function (err, stats) {
+
+          expect(stats).to.contain({
+            set: 1,
+            get: 0,
+            vinc: 0,
+            vadd: 1,
+            vmiss: 0,
+            vhit: 0,
+            lru_hit: 0,
+            net_hit: 0,
+            lru_miss: 0,
+            net_miss: 0,
+            drop: 0,
+            write_errs: 0,
+            hotsize: 1
+          });
+
+          saved.remove$(function (err, out) {
+
+            expect(err).to.not.exist();
+            outsideSaved.remove$(function (err, out) {
+
+              expect(err).to.not.exist();
+              done();
+            });
+          });
+        });
+      });
+    });
+  });
+
+  it('registers plugin with entities setting (string)', function (done) {
+
+    var seneca = Seneca({ log: 'silent' });
+    seneca.use('memcached-cache');
+    seneca.use('..', { entities: ['-/test/-'] });
+
+    var entry = seneca.make('test', 'foo', { a: 4 });
+    entry.save$(function (err, saved) {
+
+      var outside = seneca.make('foo', { a: 4 });
+      outside.save$(function (err, outsideSaved) {
+
+        expect(err).to.not.exist();
+        seneca.act('plugin:vcache, cmd:stats', function (err, stats) {
+
+          expect(stats).to.contain({
+            set: 1,
+            get: 0,
+            vinc: 0,
+            vadd: 1,
+            vmiss: 0,
+            vhit: 0,
+            lru_hit: 0,
+            net_hit: 0,
+            lru_miss: 0,
+            net_miss: 0,
+            drop: 0,
+            write_errs: 0,
+            hotsize: 1
+          });
+
+          saved.remove$(function (err, out) {
+
+            expect(err).to.not.exist();
+            outsideSaved.remove$(function (err, out) {
+
+              expect(err).to.not.exist();
+              done();
+            });
+          });
+        });
       });
     });
   });
