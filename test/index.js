@@ -26,7 +26,7 @@ it('writes then reads a record', function (done) {
   seneca.use('memcached-cache');
   seneca.use('..');
 
-  internals.ready(seneca, function () {
+  seneca.ready(function () {
 
     var type = internals.type();
     var entry = seneca.make(type, { a: 1 });
@@ -121,7 +121,7 @@ it('updates a record', function (done) {
   seneca.use('memcached-cache');
   seneca.use('..');
 
-  internals.ready(seneca, function () {
+  seneca.ready(function () {
 
     var type = internals.type();
     var entry = seneca.make(type, { a: 1 });
@@ -247,7 +247,7 @@ describe('save()', function () {
     seneca.use('./broken', { incr: true });
     seneca.use('..');
 
-    internals.ready(seneca, function () {
+    seneca.ready(function () {
 
       var type = internals.type();
       var entry = seneca.make(type, { a: 1 });
@@ -283,6 +283,105 @@ describe('save()', function () {
   });
 });
 
+describe('verifyId()', function () {
+
+  it('handles an object criteria', function (done) {
+
+    var seneca = Seneca({ log: 'silent' });
+    seneca.use('memcached-cache');
+    seneca.use('..');
+
+    seneca.ready(function () {
+
+      var type = internals.type();
+      var entry = seneca.make(type, { a: 1 });
+
+      // Save
+
+      entry.save$(function (err, saved) {
+
+        expect(err).to.not.exist();
+
+        seneca.make(type).load$({ a: 1 }, function (err, loaded) {
+
+          expect(err).to.not.exist();
+          expect(loaded).to.exist();
+
+          saved.remove$(function (err, out) {
+
+            expect(err).to.not.exist();
+            done();
+          });
+        });
+      });
+    });
+  });
+
+  it('skips an object criteria with multiple keys', function (done) {
+
+    var seneca = Seneca({ log: 'silent' });
+    seneca.use('memcached-cache');
+    seneca.use('..');
+
+    seneca.ready(function () {
+
+      var type = internals.type();
+      var entry = seneca.make(type, { a: 1 });
+
+      // Save
+
+      entry.save$(function (err, saved) {
+
+        expect(err).to.not.exist();
+
+        seneca.make(type).load$({ id: saved.id, a: 1 }, function (err, loaded) {
+
+          expect(err).to.not.exist();
+          expect(loaded).to.exist();
+
+          saved.remove$(function (err, out) {
+
+            expect(err).to.not.exist();
+            done();
+          });
+        });
+      });
+    });
+  });
+
+  it('handles a number id', function (done) {
+
+    var seneca = Seneca({ log: 'silent' });
+    seneca.use('memcached-cache');
+    seneca.use('..');
+
+    seneca.ready(function () {
+
+      var type = internals.type();
+      var entry = seneca.make(type, { a: 10 });
+
+      // Save
+
+      entry.save$(function (err, saved) {
+
+        expect(err).to.not.exist();
+
+        seneca.make(type).load$(123, function (err, loaded) {
+
+          expect(err).to.not.exist();
+          // expect(loaded).to.not.exist();
+
+          saved.remove$(function (err, out) {
+
+            expect(err).to.not.exist();
+            done();
+          });
+        });
+      });
+    });
+  });
+});
+
 describe('load()', function () {
 
   it('reports miss when item not found', function (done) {
@@ -294,7 +393,7 @@ describe('load()', function () {
     var type = internals.type();
     var entry = seneca.make(type);
 
-    entry.load$('unknown', function (err, loaded) {
+    seneca.make(type).load$('unknown', function (err, loaded) {
 
       expect(err).to.not.exist();
       expect(loaded).to.not.exist();
@@ -327,7 +426,7 @@ describe('load()', function () {
     var seneca = Seneca({ log: 'silent' });
     seneca.use('memcached-cache');
 
-    internals.ready(seneca, function () {
+    seneca.ready(function () {
 
       var type = internals.type();
       var entry = seneca.make(type, { a: 1 });
@@ -388,7 +487,7 @@ describe('load()', function () {
     seneca.use('memcached-cache');
     seneca.use('..', { maxhot: 1 });
 
-    internals.ready(seneca, function () {
+    seneca.ready(function () {
 
       var type = internals.type();
       var entry = seneca.make(type, { a: 1 });
@@ -458,7 +557,7 @@ describe('load()', function () {
     seneca.use('memcached-cache');
     seneca.use('..', { maxhot: 1 });
 
-    internals.ready(seneca, function () {
+    seneca.ready(function () {
 
       var type = internals.type();
       var entry = seneca.make(type, { a: 1 });
@@ -561,7 +660,7 @@ describe('list()', function () {
     seneca.use('memcached-cache');
     seneca.use('..');
 
-    internals.ready(seneca, function () {
+    seneca.ready(function () {
 
       var entry = seneca.make('foo', { a: 5 });
       entry.list$(function (err, list) {
@@ -671,13 +770,4 @@ describe('registerHandlers()', function () {
 internals.type = function () {
 
   return Crypto.randomBytes(8).toString('hex') + Date.now();
-};
-
-
-internals.ready = function (seneca, callback) {
-
-  seneca.ready(function () {
-
-    setImmediate(callback);             // Bypasses the try..catch operation in ready()
-  });
 };

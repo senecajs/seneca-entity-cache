@@ -1,8 +1,11 @@
-module.exports = function (options, register) {
+module.exports = function (options) {
 
   var fail = function (ignore, callback) {
 
-    return callback(new Error('Invalid implementation'));
+    setImmediate(function () {
+
+      return callback(new Error('Invalid implementation'));
+    });
   };
 
   this.add({ role: 'cache', cmd: 'set' }, fail);
@@ -12,5 +15,5 @@ module.exports = function (options, register) {
   this.add({ role: 'cache', cmd: 'incr' }, fail);
   this.add({ role: 'cache', cmd: 'decr' }, fail);
 
-  register(null, { name: 'broken' });
+  return { name: 'broken' };
 };
