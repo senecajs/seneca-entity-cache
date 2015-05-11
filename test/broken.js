@@ -1,19 +1,38 @@
+var SenecaMemcachedCache = require('seneca-memcached-cache')
+
+
 module.exports = function (options) {
 
-  var fail = function (ignore, callback) {
+  var seneca = this;
 
-    setImmediate(function () {
+  var orig = seneca.add;
 
-      return callback(new Error('Invalid implementation'));
+  seneca.add = function (criteria, fn) {
+
+    orig.call(seneca, criteria, function (args, callback) {
+
+      if (criteria.role && criteria.role === 'cache' &&
+        options.disable && options.disable[criteria.cmd]) {
+
+        if (options.disable[criteria.cmd] === true) {
+          return callback(new Error('Invalid implementation'));
+        }
+
+        // Number if lives left
+
+        --options.disable[criteria.cmd];
+        if (options.disable[criteria.cmd] === 0) {
+          options.disable[criteria.cmd] = true;
+        }
+      }
+
+      return fn(args, callback);
     });
   };
 
-  this.add({ role: 'cache', cmd: 'set' }, fail);
-  this.add({ role: 'cache', cmd: 'get' }, fail);
-  this.add({ role: 'cache', cmd: 'add' }, fail);
-  this.add({ role: 'cache', cmd: 'delete' }, fail);
-  this.add({ role: 'cache', cmd: 'incr' }, fail);
-  this.add({ role: 'cache', cmd: 'decr' }, fail);
+  var result = SenecaMemcachedCache.call(seneca, options);
 
-  return { name: 'broken' };
+  seneca.add = orig;
+
+  return result;
 };

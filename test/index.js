@@ -20,6 +20,9 @@ var it = lab.it;
 var expect = Code.expect;
 
 
+process.setMaxListeners(0);             // Remove warning caused by creating multiple framework instances
+
+
 it('writes then reads a record', function (done) {
 
   var seneca = Seneca({ log: 'silent' });
@@ -38,7 +41,7 @@ it('writes then reads a record', function (done) {
       expect(err).to.not.exist();
       expect(saved.a).to.equal(entry.a);
 
-      seneca.act('plugin:vcache, cmd:stats', function (err, stats) {
+      seneca.act({ plugin: 'vcache', cmd: 'stats' }, function (err, stats) {
 
         expect(stats).to.contain({
           set: 1,
@@ -52,7 +55,7 @@ it('writes then reads a record', function (done) {
           lru_miss: 0,
           net_miss: 0,
           drop: 0,
-          write_errs: 0,
+          cache_errs: 0,
           hotsize: 1
         });
 
@@ -64,7 +67,7 @@ it('writes then reads a record', function (done) {
           expect(loaded.a).to.equal(entry.a);
           expect(loaded.id).to.equal(saved.id);
 
-          seneca.act('plugin:vcache, cmd:stats', function (err, stats) {
+          seneca.act({ plugin: 'vcache', cmd: 'stats' }, function (err, stats) {
 
             expect(stats).to.contain({
               set: 1,
@@ -78,7 +81,7 @@ it('writes then reads a record', function (done) {
               lru_miss: 0,
               net_miss: 0,
               drop: 0,
-              write_errs: 0,
+              cache_errs: 0,
               hotsize: 1
             });
 
@@ -87,7 +90,7 @@ it('writes then reads a record', function (done) {
             loaded.remove$(function (err, out) {
 
               expect(err).to.not.exist();
-              seneca.act('plugin:vcache, cmd:stats', function (err, stats) {
+              seneca.act({ plugin: 'vcache', cmd: 'stats' }, function (err, stats) {
 
                 expect(stats).to.contain({
                   set: 1,
@@ -101,7 +104,7 @@ it('writes then reads a record', function (done) {
                   lru_miss: 0,
                   net_miss: 0,
                   drop: 1,
-                  write_errs: 0,
+                  cache_errs: 0,
                   hotsize: 1
                 });
 
@@ -133,7 +136,7 @@ it('updates a record', function (done) {
       var id = saved.id;
       saved.b = 5;
 
-      seneca.act('plugin:vcache, cmd:stats', function (err, stats) {
+      seneca.act({ plugin: 'vcache', cmd: 'stats' }, function (err, stats) {
 
         expect(stats).to.contain({
           set: 1,
@@ -147,7 +150,7 @@ it('updates a record', function (done) {
           lru_miss: 0,
           net_miss: 0,
           drop: 0,
-          write_errs: 0,
+          cache_errs: 0,
           hotsize: 1
         });
 
@@ -159,7 +162,7 @@ it('updates a record', function (done) {
           expect(modified.b).to.equal(5);
           expect(modified.id).to.equal(id);
 
-          seneca.act('plugin:vcache, cmd:stats', function (err, stats) {
+          seneca.act({ plugin: 'vcache', cmd: 'stats' }, function (err, stats) {
 
             expect(stats).to.contain({
               set: 2,
@@ -173,7 +176,7 @@ it('updates a record', function (done) {
               lru_miss: 0,
               net_miss: 0,
               drop: 0,
-              write_errs: 0,
+              cache_errs: 0,
               hotsize: 2
             });
 
@@ -186,7 +189,7 @@ it('updates a record', function (done) {
               expect(loaded.b).to.equal(5);
               expect(loaded.id).to.equal(id);
 
-              seneca.act('plugin:vcache, cmd:stats', function (err, stats) {
+              seneca.act({ plugin: 'vcache', cmd: 'stats' }, function (err, stats) {
 
                 expect(stats).to.contain({
                   set: 2,
@@ -200,7 +203,7 @@ it('updates a record', function (done) {
                   lru_miss: 0,
                   net_miss: 0,
                   drop: 0,
-                  write_errs: 0,
+                  cache_errs: 0,
                   hotsize: 2
                 });
 
@@ -209,7 +212,7 @@ it('updates a record', function (done) {
                 loaded.remove$(function (err, out) {
 
                   expect(err).to.not.exist();
-                  seneca.act('plugin:vcache, cmd:stats', function (err, stats) {
+                  seneca.act({ plugin: 'vcache', cmd: 'stats' }, function (err, stats) {
 
                     expect(stats).to.contain({
                       set: 2,
@@ -223,7 +226,7 @@ it('updates a record', function (done) {
                       lru_miss: 0,
                       net_miss: 0,
                       drop: 1,
-                      write_errs: 0,
+                      cache_errs: 0,
                       hotsize: 2
                     });
 
@@ -244,7 +247,7 @@ describe('save()', function () {
   it('handles errors in upstream cache (incr)', function (done) {
 
     var seneca = Seneca({ log: 'silent' });
-    seneca.use('./broken', { incr: true });
+    seneca.use('./broken', { disable: { incr: true } });
     seneca.use('..');
 
     seneca.ready(function () {
@@ -258,7 +261,7 @@ describe('save()', function () {
 
         expect(err).to.exist();
 
-        seneca.act('plugin:vcache, cmd:stats', function (err, stats) {
+        seneca.act({ plugin: 'vcache', cmd: 'stats' }, function (err, stats) {
 
           expect(stats).to.contain({
             set: 0,
@@ -272,11 +275,177 @@ describe('save()', function () {
             lru_miss: 0,
             net_miss: 0,
             drop: 0,
-            write_errs: 0,
+            cache_errs: 1,
             hotsize: 0
           });
 
           done();
+        });
+      });
+    });
+  });
+
+  it('handles errors in upstream cache (add)', function (done) {
+
+    var seneca = Seneca({ log: 'silent' });
+    seneca.use('./broken', { disable: { add: true } });
+    seneca.use('..');
+
+    seneca.ready(function () {
+
+      var type = internals.type();
+      var entry = seneca.make(type, { a: 1 });
+
+      // Save
+
+      entry.save$(function (err, saved) {
+
+        expect(err).to.exist();
+
+        seneca.act({ plugin: 'vcache', cmd: 'stats' }, function (err, stats) {
+
+          expect(stats).to.contain({
+            set: 0,
+            get: 0,
+            vinc: 0,
+            vadd: 0,
+            vmiss: 0,
+            vhit: 0,
+            lru_hit: 0,
+            net_hit: 0,
+            lru_miss: 0,
+            net_miss: 0,
+            drop: 0,
+            cache_errs: 1,
+            hotsize: 0
+          });
+
+          done();
+        });
+      });
+    });
+  });
+
+  it('handles errors in upstream cache (set)', function (done) {
+
+    var seneca = Seneca({ log: 'silent' });
+    seneca.use('./broken', { disable: { set: true } });
+    seneca.use('..');
+
+    seneca.ready(function () {
+
+      var type = internals.type();
+      var entry = seneca.make(type, { a: 1 });
+
+      // Save
+
+      entry.save$(function (err, saved) {
+
+        expect(err).to.exist();
+
+        seneca.act({ plugin: 'vcache', cmd: 'stats' }, function (err, stats) {
+
+          expect(stats).to.contain({
+            set: 0,
+            get: 0,
+            vinc: 0,
+            vadd: 1,
+            vmiss: 0,
+            vhit: 0,
+            lru_hit: 0,
+            net_hit: 0,
+            lru_miss: 0,
+            net_miss: 0,
+            drop: 0,
+            cache_errs: 1,
+            hotsize: 1
+          });
+
+          done();
+        });
+      });
+    });
+  });
+
+  it('handles errors lower priority entity service', function (done) {
+
+    var seneca = Seneca({ log: 'silent' });
+    seneca.use('memcached-cache');
+
+    seneca.add({ role: 'entity', cmd: 'save' }, function (ignore, callback) { return callback(new Error('Bad entity service')) });
+
+    seneca.use('..');
+
+    seneca.ready(function () {
+
+      var type = internals.type();
+      var entry = seneca.make(type, { a: 1 });
+
+      // Save
+
+      entry.save$(function (err, saved) {
+
+        expect(err).to.exist();
+        done();
+      });
+    });
+  });
+
+  it('handles upstream error when updating a record (writeData)', function (done) {
+
+    var seneca = Seneca({ log: 'silent' });
+    var disable = { set: false };
+    seneca.use('./broken', { disable: disable });
+    seneca.use('..');
+
+    seneca.ready(function () {
+
+      var type = internals.type();
+      var entry = seneca.make(type, { a: 1 });
+
+      // Save
+
+      entry.save$(function (err, saved) {
+
+        var id = saved.id;
+        saved.b = 5;
+
+        // Update
+
+        disable.set = true;
+
+        saved.save$(function (err, modified) {
+
+          expect(err).to.exist();
+
+          // Remove
+
+          disable.set = false;
+
+          saved.remove$(function (err, out) {
+
+            expect(err).to.not.exist();
+            seneca.act({ plugin: 'vcache', cmd: 'stats' }, function (err, stats) {
+
+              expect(stats).to.contain({
+                set: 1,
+                get: 0,
+                vinc: 1,
+                vadd: 1,
+                vmiss: 0,
+                vhit: 0,
+                lru_hit: 0,
+                net_hit: 0,
+                lru_miss: 0,
+                net_miss: 0,
+                drop: 1,
+                cache_errs: 1,
+                hotsize: 2
+              });
+
+              done();
+            });
+          });
         });
       });
     });
@@ -398,7 +567,7 @@ describe('load()', function () {
       expect(err).to.not.exist();
       expect(loaded).to.not.exist();
 
-      seneca.act('plugin:vcache, cmd:stats', function (err, stats) {
+      seneca.act({ plugin: 'vcache', cmd: 'stats' }, function (err, stats) {
 
         expect(stats).to.contain({
           set: 0,
@@ -412,7 +581,7 @@ describe('load()', function () {
           lru_miss: 0,
           net_miss: 0,
           drop: 0,
-          write_errs: 0,
+          cache_errs: 0,
           hotsize: 0
         });
 
@@ -450,7 +619,7 @@ describe('load()', function () {
           expect(loaded.a).to.equal(entry.a);
           expect(loaded.id).to.equal(saved.id);
 
-          seneca.act('plugin:vcache, cmd:stats', function (err, stats) {
+          seneca.act({ plugin: 'vcache', cmd: 'stats' }, function (err, stats) {
 
             expect(stats).to.contain({
               set: 1,
@@ -464,7 +633,7 @@ describe('load()', function () {
               lru_miss: 0,
               net_miss: 0,
               drop: 0,
-              write_errs: 0,
+              cache_errs: 0,
               hotsize: 1
             });
 
@@ -514,7 +683,7 @@ describe('load()', function () {
             expect(loaded.a).to.equal(entry.a);
             expect(loaded.id).to.equal(saved1.id);
 
-            seneca.act('plugin:vcache, cmd:stats', function (err, stats) {
+            seneca.act({ plugin: 'vcache', cmd: 'stats' }, function (err, stats) {
 
               expect(stats).to.contain({
                 set: 2,
@@ -528,7 +697,7 @@ describe('load()', function () {
                 lru_miss: 1,
                 net_miss: 0,
                 drop: 0,
-                write_errs: 0,
+                cache_errs: 0,
                 hotsize: 1
               });
 
@@ -589,7 +758,7 @@ describe('load()', function () {
               expect(err).to.not.exist();
               expect(loaded).to.be.null();
 
-              seneca.act('plugin:vcache, cmd:stats', function (err, stats) {
+              seneca.act({ plugin: 'vcache', cmd: 'stats' }, function (err, stats) {
 
                 expect(stats).to.contain({
                   set: 2,
@@ -603,7 +772,7 @@ describe('load()', function () {
                   lru_miss: 1,
                   net_miss: 1,
                   drop: 0,
-                  write_errs: 0,
+                  cache_errs: 0,
                   hotsize: 1
                 });
 
@@ -623,6 +792,359 @@ describe('load()', function () {
             });
           });
         });
+      });
+    });
+  });
+
+  it('errors on failed upstream vkey lookup', function (done) {
+
+    var seneca = Seneca({ log: 'silent' });
+    seneca.use('./broken', { disable: { get: true } });
+    seneca.use('..');
+
+    var type = internals.type();
+    var entry = seneca.make(type);
+
+    seneca.make(type).load$('unknown', function (err, loaded) {
+
+      expect(err).to.exist();
+      expect(loaded).to.not.exist();
+
+      seneca.act({ plugin: 'vcache', cmd: 'stats' }, function (err, stats) {
+
+        expect(stats).to.contain({
+          set: 0,
+          get: 0,
+          vinc: 0,
+          vadd: 0,
+          vmiss: 0,
+          vhit: 0,
+          lru_hit: 0,
+          net_hit: 0,
+          lru_miss: 0,
+          net_miss: 0,
+          drop: 0,
+          cache_errs: 1,
+          hotsize: 0
+        });
+
+        done();
+      });
+    });
+  });
+
+  it('passes lower priority load error', function (done) {
+
+    var seneca = Seneca({ log: 'silent' });
+    seneca.use('memcached-cache');
+
+    seneca.add({ role: 'entity', cmd: 'load' }, function (ignore, callback) { return callback(new Error('Bad entity service')) });
+
+    seneca.use('..');
+
+    var type = internals.type();
+    var entry = seneca.make(type);
+
+    seneca.make(type).load$('unknown', function (err, loaded) {
+
+      expect(err).to.exist();
+      expect(loaded).to.not.exist();
+
+      seneca.act({ plugin: 'vcache', cmd: 'stats' }, function (err, stats) {
+
+        expect(stats).to.contain({
+          set: 0,
+          get: 1,
+          vinc: 0,
+          vadd: 0,
+          vmiss: 1,
+          vhit: 0,
+          lru_hit: 0,
+          net_hit: 0,
+          lru_miss: 0,
+          net_miss: 0,
+          drop: 0,
+          cache_errs: 0,
+          hotsize: 0
+        });
+
+        done();
+      });
+    });
+  });
+
+  it('errors on failed upstream vkey write (add)', function (done) {
+
+    var seneca = Seneca({ log: 'silent' });
+    var disable = { add: false };
+    seneca.use('./broken', { disable: disable });
+
+    seneca.ready(function () {
+
+      var type = internals.type();
+      var entry = seneca.make(type, { a: 1 });
+
+      // Save
+
+      entry.save$(function (err, saved) {
+
+        expect(err).to.not.exist();
+        expect(saved.a).to.equal(entry.a);
+
+        // Add vcache
+
+        seneca.use('..');
+
+        // Load
+
+        disable.add = true;
+
+        seneca.make(type).load$(saved.id, function (err, loaded) {
+
+          disable.add = false;
+
+          expect(err).to.exist();
+          expect(loaded).to.not.exist();
+
+          seneca.act({ plugin: 'vcache', cmd: 'stats' }, function (err, stats) {
+
+            expect(stats).to.contain({
+              set: 0,
+              get: 1,
+              vinc: 0,
+              vadd: 0,
+              vmiss: 1,
+              vhit: 0,
+              lru_hit: 0,
+              net_hit: 0,
+              lru_miss: 0,
+              net_miss: 0,
+              drop: 0,
+              cache_errs: 1,
+              hotsize: 0
+            });
+
+            // Remove
+
+            saved.remove$(function (err, out) {
+
+              expect(err).to.not.exist();
+              done();
+            });
+          });
+        });
+      });
+    });
+  });
+
+  it('errors on failed upstream vkey write (set)', function (done) {
+
+    var seneca = Seneca({ log: 'silent' });
+    var disable = { set: false };
+    seneca.use('./broken', { disable: disable });
+
+    seneca.ready(function () {
+
+      var type = internals.type();
+      var entry = seneca.make(type, { a: 1 });
+
+      // Save
+
+      entry.save$(function (err, saved) {
+
+        expect(err).to.not.exist();
+        expect(saved.a).to.equal(entry.a);
+
+        // Add vcache
+
+        seneca.use('..');
+
+        // Load
+
+        disable.set = true;
+
+        seneca.make(type).load$(saved.id, function (err, loaded) {
+
+          disable.set = false;
+
+          expect(err).to.exist();
+          expect(loaded).to.not.exist();
+
+          seneca.act({ plugin: 'vcache', cmd: 'stats' }, function (err, stats) {
+
+            expect(stats).to.contain({
+              set: 0,
+              get: 1,
+              vinc: 0,
+              vadd: 1,
+              vmiss: 1,
+              vhit: 0,
+              lru_hit: 0,
+              net_hit: 0,
+              lru_miss: 0,
+              net_miss: 0,
+              drop: 0,
+              cache_errs: 1,
+              hotsize: 1
+            });
+
+            // Remove
+
+            saved.remove$(function (err, out) {
+
+              expect(err).to.not.exist();
+              done();
+            });
+          });
+        });
+      });
+    });
+  });
+
+  it('handles upstream cache get error after value evicted from lru cache', function (done) {
+
+    var seneca = Seneca({ log: 'silent' });
+    var disable = { get: false };
+    seneca.use('./broken', { disable: disable });
+    seneca.use('..', { maxhot: 1 });
+
+    seneca.ready(function () {
+
+      var type = internals.type();
+      var entry = seneca.make(type, { a: 1 });
+
+      // Save
+
+      entry.save$(function (err, saved1) {
+
+        expect(err).to.not.exist();
+        expect(saved1.a).to.equal(entry.a);
+
+        // Save another
+
+        var another = seneca.make(type, { a: 2 });
+        another.save$(function (err, saved2) {
+
+          expect(err).to.not.exist();
+
+          // Load
+
+          disable.get = 1;
+
+          seneca.make(type).load$(saved1.id, function (err, loaded) {
+
+            disable.get = false;
+
+            expect(err).to.exist();
+            expect(loaded).to.not.exist();
+
+            seneca.act({ plugin: 'vcache', cmd: 'stats' }, function (err, stats) {
+
+              expect(stats).to.contain({
+                set: 2,
+                get: 1,
+                vinc: 0,
+                vadd: 2,
+                vmiss: 0,
+                vhit: 1,
+                lru_hit: 0,
+                net_hit: 0,
+                lru_miss: 1,
+                net_miss: 0,
+                drop: 0,
+                cache_errs: 1,
+                hotsize: 1
+              });
+
+              // Remove
+
+              saved1.remove$(function (err, out) {
+
+                expect(err).to.not.exist();
+
+                saved2.remove$(function (err, out) {
+
+                  expect(err).to.not.exist();
+                  done();
+                });
+              });
+            });
+          });
+        });
+      });
+    });
+  });
+});
+
+describe('remove()', function () {
+
+  it('passes lower priority remove error', function (done) {
+
+    var seneca = Seneca({ log: 'silent' });
+    seneca.use('memcached-cache');
+
+    seneca.add({ role: 'entity', cmd: 'remove' }, function (ignore, callback) { return callback(new Error('Bad entity service')) });
+
+    seneca.use('..');
+
+    var type = internals.type();
+    var entry = seneca.make(type);
+
+    seneca.make(type, { id: 'none' }).remove$(function (err) {
+
+      expect(err).to.exist();
+      done();
+    });
+  });
+
+  it('skips unsupported id types', function (done) {
+
+    var seneca = Seneca({ log: 'silent' });
+    seneca.use('memcached-cache');
+    seneca.use('..');
+
+    var type = internals.type();
+    var entry = seneca.make(type, { b: '123', a: 4 });
+
+    entry.remove$(function (err) {
+
+      expect(err).to.not.exist();
+      done();
+    });
+  });
+
+  it('errors on upstream set error', function (done) {
+
+    var seneca = Seneca({ log: 'silent' });
+    seneca.use('./broken', { disable: { set: true } });
+    seneca.use('..');
+
+    var type = internals.type();
+    var entry = seneca.make(type);
+
+    seneca.make(type, { id: 'none' }).remove$(function (err) {
+
+      expect(err).to.exist();
+
+      seneca.act({ plugin: 'vcache', cmd: 'stats' }, function (err, stats) {
+
+        expect(stats).to.contain({
+          set: 0,
+          get: 0,
+          vinc: 0,
+          vadd: 0,
+          vmiss: 0,
+          vhit: 0,
+          lru_hit: 0,
+          net_hit: 0,
+          lru_miss: 0,
+          net_miss: 0,
+          drop: 0,
+          cache_errs: 1,
+          hotsize: 0
+        });
+
+        done();
       });
     });
   });
@@ -688,7 +1210,7 @@ describe('registerHandlers()', function () {
       outside.save$(function (err, outsideSaved) {
 
         expect(err).to.not.exist();
-        seneca.act('plugin:vcache, cmd:stats', function (err, stats) {
+        seneca.act({ plugin: 'vcache', cmd: 'stats' }, function (err, stats) {
 
           expect(stats).to.contain({
             set: 1,
@@ -702,7 +1224,7 @@ describe('registerHandlers()', function () {
             lru_miss: 0,
             net_miss: 0,
             drop: 0,
-            write_errs: 0,
+            cache_errs: 0,
             hotsize: 1
           });
 
@@ -733,7 +1255,7 @@ describe('registerHandlers()', function () {
       outside.save$(function (err, outsideSaved) {
 
         expect(err).to.not.exist();
-        seneca.act('plugin:vcache, cmd:stats', function (err, stats) {
+        seneca.act({ plugin: 'vcache', cmd: 'stats' }, function (err, stats) {
 
           expect(stats).to.contain({
             set: 1,
@@ -747,7 +1269,7 @@ describe('registerHandlers()', function () {
             lru_miss: 0,
             net_miss: 0,
             drop: 0,
-            write_errs: 0,
+            cache_errs: 0,
             hotsize: 1
           });
 
