@@ -16,18 +16,30 @@ var internals = {
 
 
 internals.seneca.use('memcached-cache');
-//internals.seneca.use('..');
 
-internals.seneca.ready(function () {
+internals.seneca.use('mongo-store', { name: 'test', host: '127.0.0.1', port: 27017 });
+internals.seneca.use('..');
 
-    internals.script([
+
+internals.scripts = {
+    baseline: [
         { action: 'save', args: [1], repeat: 500 },
         { action: 'load', args: [0, 100], repeat: 50 },
         { action: 'load', args: [300, 400], repeat: 50 },
         { action: 'update', args: [0, 100], repeat: 50 },
         { action: 'load', args: [0, 100], repeat: 50 },
         { action: 'load', args: [300, 400], repeat: 50 }
-    ], function (err) {
+    ],
+    load: [
+        { action: 'save', args: [1], repeat: 100 },
+        { action: 'load', args: [0, 100], repeat: 100 },
+        { action: 'load', args: [50, 60], repeat: 100 }
+    ]
+}
+
+internals.seneca.ready(function () {
+
+    internals.script(internals.scripts.load, function (err) {
 
         process.exit();
     });
