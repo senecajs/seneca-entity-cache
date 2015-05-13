@@ -32,8 +32,8 @@ internals.scripts = {
   ],
   load: [
     { action: 'save', args: [1], repeat: 100 },
-    { action: 'load', args: [0, 100], repeat: 100 },
-    { action: 'load', args: [50, 60], repeat: 100 }
+    { action: 'load', args: [0, 100], repeat: 1000 },
+    { action: 'load', args: [50, 60], repeat: 1000 }
   ]
 }
 
@@ -41,7 +41,11 @@ internals.seneca.ready(function () {
 
   internals.script(internals.scripts.load, function (err) {
 
-    process.exit();
+    internals.seneca.act({ plugin: 'vcache', cmd: 'stats' }, function (err, stats) {
+
+      // console.log(stats);
+      process.exit();
+    });
   });
 });
 
@@ -51,17 +55,36 @@ internals.script = function (steps, callback) {
   var prepared = [];
   for (var i = 0, il = steps.length; i < il; ++i) {
     var step = steps[i];
+    step.id = i;
     for (var r = 0; r < (step.repeat || 1) ; ++r) {
       prepared.push(step);
     }
   }
 
+  var stats = {};
   var each = function (step, next) {
 
-    return internals.time(step.action, step.args, next);
+    return internals.time(step.action, step.args, function (err, result, elapsed) {
+
+      var stat = stats[step.id] || { count: 0, total: 0, avg: 0 };
+      ++stat.count;
+      stat.total += elapsed;
+      stat.avg = stat.total / stat.count;
+      stats[step.id] = stat;
+
+      return next(err);
+    });
   };
 
-  Items.serial(prepared, each, callback);
+  Items.serial(prepared, each, function (err) {
+
+    for (var i = 0, il = steps.length; i < il; ++i) {
+      var step = steps[i];
+      console.log(step.action + ',' + step.args.join('-') + ',' + stats[i].avg);
+    }
+
+    return callback(err);
+  });
 };
 
 
@@ -76,7 +99,6 @@ internals.time = function (method, args, callback) {
   params.push(function (err, result) {
 
     var elapsed = bench.elapsed();
-    console.log(method + ',' + args.join('-') + ',' + elapsed);
     return callback(err, result, elapsed);
   });
 
