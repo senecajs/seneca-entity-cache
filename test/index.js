@@ -452,7 +452,7 @@ describe('save()', function () {
   });
 });
 
-describe('verifyId()', function () {
+describe('load()', function () {
 
   it('handles an object criteria', function (done) {
 
@@ -549,9 +549,6 @@ describe('verifyId()', function () {
       });
     });
   });
-});
-
-describe('load()', function () {
 
   it('reports miss when item not found', function (done) {
 
