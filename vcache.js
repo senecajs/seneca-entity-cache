@@ -98,7 +98,7 @@ module.exports = function (options) {
     });
   };
 
-  var save = function (args, callback) {
+  var save = function save (args, callback) {
 
     var self = this;
 
@@ -162,7 +162,7 @@ module.exports = function (options) {
 
   // Cache read
 
-  var load = function (args, callback) {
+  var load = function load (args, callback) {
 
     var self = this;
 
@@ -272,7 +272,7 @@ module.exports = function (options) {
 
   // Cache remove
 
-  var remove = function (args, callback) {
+  var remove = function remove (args, callback) {
 
     var self = this;
 
@@ -300,7 +300,7 @@ module.exports = function (options) {
 
   // Cache list
 
-  var list = function (args, callback) {
+  var list = function list (args, callback) {
 
     // Pass-through to underlying cache
 
@@ -309,22 +309,47 @@ module.exports = function (options) {
 
   // Register cache interface
 
-  var registerHandlers = function (args) {
+  var registerHandlers = function (args, flags) {
 
-    seneca.add(_.extend({}, args, { role: 'entity', cmd: 'save' }), save);
-    seneca.add(_.extend({}, args, { role: 'entity', cmd: 'load' }), load);
-    seneca.add(_.extend({}, args, { role: 'entity', cmd: 'list' }), list);
-    seneca.add(_.extend({}, args, { role: 'entity', cmd: 'remove' }), remove);
+    if( flags.exact ) {
+      seneca.add(_.extend({}, args, { role: 'entity', cmd: 'save' }), save);
+      seneca.add(_.extend({}, args, { role: 'entity', cmd: 'load' }), load);
+      seneca.add(_.extend({}, args, { role: 'entity', cmd: 'list' }), list);
+      seneca.add(_.extend({}, args, { role: 'entity', cmd: 'remove' }), remove);
+      return
+    }
+
+    var actions = {
+      save: save, load: load, list: list, remove: remove
+    }
+
+    var core_patterns = [
+      { role: 'entity', cmd: 'save' },
+      { role: 'entity', cmd: 'load' },
+      { role: 'entity', cmd: 'list' },
+      { role: 'entity', cmd: 'remove' }
+    ]
+
+    _.each( core_patterns, function( core_pat ) {
+      var pats = seneca.list( core_pat )
+      _.each( pats, function( pat ) {
+        //console.log(core_pat, pat, actions[core_pat.cmd].name)
+        seneca.add( pat, actions[core_pat.cmd] )
+      })
+    })
   };
 
   if (settings.entities) {
     _.each(settings.entities, function (entspec) {
 
-      registerHandlers(_.isString(entspec) ? seneca.util.parsecanon(entspec) : entspec);
+      registerHandlers(
+        _.isString(entspec) ? seneca.util.parsecanon(entspec) : entspec, 
+        {exact:true}
+      );
     });
   }
   else {
-    registerHandlers();
+    registerHandlers(null,{exact:false});
   }
 
   // Register cache statistics action
