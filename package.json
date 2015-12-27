@@ -2,7 +2,7 @@
   "name": "seneca-vcache",
   "version": "0.3.1",
   "description": "Versioned caching plugin for seneca",
-  "main": "lib/index.js",
+  "main": "vcache.js",
   "scripts": {
     "test": "node node_modules/lab/bin/lab -a code -t 100 -v",
     "test-cov-html": "node node_modules/lab/bin/lab -a code -r html -o coverage.html"
@@ -30,12 +30,12 @@
     "hoek": "2.x.x",
     "items": "1.x.x",
     "lab": "5.x.x",
-    "seneca": "0.6.x",
+    "seneca": "plugin",
     "seneca-memcached-cache": "0.2.x"
   },
   "files": [
     "LICENSE.txt",
     "README.md",
-    "lib/index.js"
+    "vcache.js"
   ]
 }

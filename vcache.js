@@ -67,7 +67,7 @@ module.exports = function (options) {
       expires: settings.expires
     };
 
-    seneca.act({ role: 'cache', cmd: 'add' }, item, function (err, writtenKey) {
+    seneca.act({ role: 'cache', cmd: 'add' }, item, function (err, result) {
 
       if (err) {
         ++stats.cache_errs;
@@ -85,7 +85,8 @@ module.exports = function (options) {
     seneca.log.debug('set', key);
 
     cache.set(key, ent);
-    seneca.act({ role: 'cache', cmd: 'set' }, { key: key, val: ent.data$(), expires: settings.expires }, function (err, key) {
+    seneca.act({ role: 'cache', cmd: 'set' }, { key: key, val: ent.data$(), expires: settings.expires }, function (err, result) {
+      var key = result && result.value
 
       if (err) {
         ++stats.cache_errs;
@@ -113,7 +114,8 @@ module.exports = function (options) {
 
       var vkey = versionKey(ent, ent.id);
 
-      self.act({ role: 'cache', cmd: 'incr' }, { key: vkey, val: 1 }, function (err, version) {
+      self.act({ role: 'cache', cmd: 'incr' }, { key: vkey, val: 1 }, function (err, result) {
+        var version = result && result.value
 
         if (err) {
           ++stats.cache_errs;
@@ -178,7 +180,8 @@ module.exports = function (options) {
     // Lookup version key
 
     var vkey = versionKey(qent, id);
-    this.act({ role: 'cache', cmd: 'get' }, { key: vkey }, function (err, version) {
+    this.act({ role: 'cache', cmd: 'get' }, { key: vkey }, function (err, result) {
+      var version = result && result.value
 
       if (err) {
         ++stats.cache_errs;
@@ -189,7 +192,7 @@ module.exports = function (options) {
 
       // Version not found
 
-      if (version === undefined ||
+      if (null == version ||
           version === -1) {                               // Item dropped from cache
 
         ++stats.vmiss;
@@ -241,7 +244,8 @@ module.exports = function (options) {
       self.log.debug('miss', 'lru', key);
       ++stats.lru_miss;
 
-      self.act({ role: 'cache', cmd: 'get' }, { key: key }, function (err, ent) {
+      self.act({ role: 'cache', cmd: 'get' }, { key: key }, function (err, result) {
+        var ent = result && result.value
 
         if (err) {
           ++stats.cache_errs;
@@ -279,7 +283,8 @@ module.exports = function (options) {
       }
 
       var vkey = versionKey(args.qent, args.q.id);    // Only called with a valid entity id
-      self.act({ role: 'cache', cmd: 'set' }, { key: vkey, val: -1, expires: settings.expires }, function (err, ent) {
+      self.act({ role: 'cache', cmd: 'set' }, { key: vkey, val: -1, expires: settings.expires }, function (err, result) {
+        var ent = result && result.value
 
         if (err) {
           ++stats.cache_errs;
