@@ -1,38 +1,44 @@
-var SenecaMemcachedCache = require('seneca-memcached-cache')
+var SenecaMemcachedCache = require('@seneca/memcached-cache')
 
+module.exports = function(options) {
+  var seneca = this
+  var control = { broken: true }
 
-module.exports = function (options) {
+  var orig = seneca.add
 
-  var seneca = this;
+  seneca.add = function(criteria, fn) {
+    orig.call(seneca, criteria, function(args, callback, meta) {
+      //console.log('BROKEN', control, criteria)
 
-  var orig = seneca.add;
-
-  seneca.add = function (criteria, fn) {
-
-    orig.call(seneca, criteria, function (args, callback) {
-
-      if (criteria.role && criteria.role === 'cache' &&
-        options.disable && options.disable[criteria.cmd]) {
-
-        if (options.disable[criteria.cmd] === true) {
-          return callback(new Error('Invalid implementation'));
+      if (
+        criteria.role &&
+        criteria.role === 'cache' &&
+        control &&
+        control[criteria.cmd]
+      ) {
+        if (control[criteria.cmd] === true) {
+          return callback(new Error('Invalid implementation'))
         }
 
         // Number if lives left
 
-        --options.disable[criteria.cmd];
-        if (options.disable[criteria.cmd] === 0) {
-          options.disable[criteria.cmd] = true;
+        --control[criteria.cmd]
+        if (control[criteria.cmd] === 0) {
+          control[criteria.cmd] = true
         }
       }
 
-      return fn(args, callback);
-    });
-  };
+      return fn(args, callback, meta)
+    })
+  }
 
-  var result = SenecaMemcachedCache.call(seneca, options);
+  var result = SenecaMemcachedCache.call(seneca, options)
 
-  seneca.add = orig;
+  result.exports = {
+    control: control
+  }
 
-  return result;
-};
+  seneca.add = orig
+
+  return result
+}

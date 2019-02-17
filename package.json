@@ -1,11 +1,15 @@
 {
   "name": "seneca-vcache",
-  "version": "0.4.0",
+  "version": "0.5.0",
   "description": "Versioned caching plugin for seneca",
   "main": "vcache.js",
   "scripts": {
-    "test": "node node_modules/lab/bin/lab -a code -t 100 -v",
-    "test-cov-html": "node node_modules/lab/bin/lab -a code -r html -o coverage.html"
+    "test": "lab -P test -t 80 -I URL,URLSearchParams,igUint64Array,BigInt64Array,BigInt,BigUint64Array",
+    "prettier": "prettier --write --no-semi --single-quote *.js lib/*.js test/*.js",
+    "coveralls": "lab -s -P test -r lcov | coveralls",
+    "clean-npm": "rm -rf node_modules package-lock.json",
+    "repo-tag": "REPO_VERSION=`node -e \"console.log(require('./package').version)\"` && echo TAG: v$REPO_VERSION && git commit -a -m v$REPO_VERSION && git push && git tag v$REPO_VERSION && git push --tags;",
+    "repo-publish": "npm run prettier && npm test && npm run repo-tag && npm publish"
   },
   "repository": {
     "type": "git",
@@ -23,15 +27,17 @@
   "license": "MIT",
   "dependencies": {
     "underscore": "^1.6.0",
-    "lru-cache": "^2.5.0"
+    "lru-cache": "^5.1.1"
   },
   "devDependencies": {
-    "code": "1.x.x",
-    "hoek": "2.x.x",
-    "items": "1.x.x",
-    "lab": "5.x.x",
-    "seneca": "plugin",
-    "seneca-memcached-cache": "0.2.x"
+    "@seneca/memcached-cache": "^1.0.1",
+    "code": "^5.2.4",
+    "hoek": "^6.1.2",
+    "items": "^2.1.2",
+    "lab": "^18.0.2",
+    "prettier": "^1.16.4",
+    "seneca": "^3.8.2",
+    "seneca-entity": "^2.5.1"
   },
   "files": [
     "LICENSE.txt",

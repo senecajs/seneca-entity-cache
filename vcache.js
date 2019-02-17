@@ -1,23 +1,23 @@
-'use strict';
+'use strict'
 
+var _ = require('underscore')
+var LRUCache = require('lru-cache')
 
-var _ = require('underscore');
-var LRUCache = require('lru-cache');
+module.exports = function(options) {
+  var seneca = this
 
-
-module.exports = function (options) {
-
-  var seneca = this;
-
-  var settings = seneca.util.deepextend({
-    prefix: 'seneca-vcache',
-    maxhot: 1111,
-    expires: 3600                               // 1 Hour
-  }, options);
+  var settings = seneca.util.deepextend(
+    {
+      prefix: 'seneca-vcache',
+      maxhot: 1111,
+      expires: 3600 // 1 Hour
+    },
+    options
+  )
 
   // Setup in-memory cache
 
-  var cache = LRUCache(settings.maxhot);
+  var cache = new LRUCache(settings.maxhot)
 
   // Statistics
 
@@ -35,292 +35,298 @@ module.exports = function (options) {
     net_miss: 0,
     drop: 0,
     cache_errs: 0
-  };
+  }
 
   // Keys
 
-  var versionKey = function (ent, id) {
-
+  var versionKey = function(ent, id) {
     // Example: 'seneca-vcache~v~zen/moon/bar~171qa9'
 
-    var key = settings.prefix + '~v~' + ent.canon$({ string: true }) + '~' + id;
-    return key;
-  };
+    var key = settings.prefix + '~v~' + ent.canon$({ string: true }) + '~' + id
+    return key
+  }
 
-  var dataKey = function (ent, id, version) {
-
+  var dataKey = function(ent, id, version) {
     // Example: 'seneca-vcache~d~0~zen/moon/bar~171qa9'
 
-    var key = settings.prefix + '~d~' + version + '~' + ent.canon$({ string: true }) + '~' + id;
-    return key;
-  };
+    var key =
+      settings.prefix +
+      '~d~' +
+      version +
+      '~' +
+      ent.canon$({ string: true }) +
+      '~' +
+      id
+    return key
+  }
 
   // Cache write
 
-  var writeKey = function (seneca, vkey, callback) {
-
+  var writeKey = function(seneca, vkey, callback) {
     // New item
 
     var item = {
       key: vkey,
       val: 0,
       expires: settings.expires
-    };
+    }
 
-    seneca.act({ role: 'cache', cmd: 'add' }, item, function (err, result) {
-
+    seneca.act({ role: 'cache', cmd: 'add' }, item, function(err, result) {
       if (err) {
-        ++stats.cache_errs;
-        return callback(err);
+        ++stats.cache_errs
+        return callback(err)
       }
 
-      ++stats.vadd;
-      return callback(null);
-    });
-  };
+      ++stats.vadd
+      return callback(null)
+    })
+  }
 
-  var writeData = function (seneca, ent, version, callback) {
+  var writeData = function(seneca, ent, version, callback) {
+    var key = dataKey(ent, ent.id, version)
+    seneca.log.debug('set', key)
 
-    var key = dataKey(ent, ent.id, version);
-    seneca.log.debug('set', key);
+    cache.set(key, ent)
+    seneca.act(
+      { role: 'cache', cmd: 'set' },
+      { key: key, val: ent.data$(), expires: settings.expires },
+      function(err, result) {
+        var key = result && result.value
 
-    cache.set(key, ent);
-    seneca.act({ role: 'cache', cmd: 'set' }, { key: key, val: ent.data$(), expires: settings.expires }, function (err, result) {
-      var key = result && result.value
+        if (err) {
+          ++stats.cache_errs
+          return callback(err)
+        }
 
-      if (err) {
-        ++stats.cache_errs;
-        return callback(err);
+        ++stats.set
+        return callback(null, key)
       }
+    )
+  }
 
-      ++stats.set;
-      return callback(null, key);
-    });
-  };
-
-  var save = function save (args, callback) {
-
-    var self = this;
+  var save = function save(args, callback) {
+    var self = this
 
     // Pass to lower priority entity action first
 
-    this.prior(args, function (err, ent) {
-
+    this.prior(args, function(err, ent) {
       if (err) {
-        return callback(err);
+        return callback(err)
       }
 
       // Generate version key
 
-      var vkey = versionKey(ent, ent.id);
+      var vkey = versionKey(ent, ent.id)
 
-      self.act({ role: 'cache', cmd: 'incr' }, { key: vkey, val: 1 }, function (err, result) {
+      self.act({ role: 'cache', cmd: 'incr' }, { key: vkey, val: 1 }, function(
+        err,
+        result
+      ) {
         var version = result && result.value
 
         if (err) {
-          ++stats.cache_errs;
-          return callback(err);
+          ++stats.cache_errs
+          return callback(err)
         }
 
         if (version === false) {
-
           // New item
 
-          writeKey(self, vkey, function (err) {
-
+          writeKey(self, vkey, function(err) {
             if (err) {
-              return callback(err);
+              return callback(err)
             }
 
-            writeData(self, ent, 0, function (err, out) {
-
+            writeData(self, ent, 0, function(err, out) {
               if (err) {
-                return callback(err);
+                return callback(err)
               }
 
-              return callback(null, ent);
-            });
-          });
+              return callback(null, ent)
+            })
+          })
 
-          return;
+          return
         }
 
         // Updated item
 
-        ++stats.vinc;
-        writeData(self, ent, version, function (err, out) {
-
+        ++stats.vinc
+        writeData(self, ent, version, function(err, out) {
           if (err) {
-            return callback(err);
+            return callback(err)
           }
 
-          return callback(null, ent);
-        });
-      });
-    });
-  };
+          return callback(null, ent)
+        })
+      })
+    })
+  }
 
   // Cache read
 
-  var load = function load (args, callback) {
-
-    var self = this;
-
-    var prior = this.prior;
-    var qent = args.qent;
+  var load = function load(args, callback) {
+    var self = this
+    var qent = args.qent
 
     // Verify id format is compatible
 
     if (!args.q.id || Object.keys(args.q).length !== 1) {
-      return prior(args, callback);
+      return this.prior(args, callback)
     }
 
-    var id = args.q.id;
+    var id = args.q.id
 
     // Lookup version key
 
-    var vkey = versionKey(qent, id);
-    this.act({ role: 'cache', cmd: 'get' }, { key: vkey }, function (err, result) {
+    var vkey = versionKey(qent, id)
+    this.act({ role: 'cache', cmd: 'get' }, { key: vkey }, function(
+      err,
+      result
+    ) {
       var version = result && result.value
 
       if (err) {
-        ++stats.cache_errs;
-        return callback(err);
+        ++stats.cache_errs
+        return callback(err)
       }
 
-      ++stats.get;
+      ++stats.get
 
       // Version not found
 
-      if (null == version ||
-          version === -1) {                               // Item dropped from cache
+      if (null == version || version === -1) {
+        // Item dropped from cache
 
-        ++stats.vmiss;
-        self.log.debug('miss', 'version', vkey);
-        self.log.debug('miss', qent, id, 0);
+        ++stats.vmiss
+        self.log.debug('miss', 'version', vkey)
+        self.log.debug('miss', qent, id, 0)
 
         // Pass to lower priority handler
 
-        return prior(args, function (err, ent) {
-
-          if (err || !ent) {                          // Error or not found
-            return callback(err, null);
+        return this.prior(args, function(err, ent) {
+          if (err || !ent) {
+            // Error or not found
+            return callback(err, null)
           }
 
-          writeKey(self, vkey, function (err) {
-
+          writeKey(self, vkey, function(err) {
             if (err) {
-              return callback(err);
+              return callback(err)
             }
 
-            return writeData(self, ent, 0, function (err, version) {
-
+            return writeData(self, ent, 0, function(err, version) {
               if (err) {
-                return callback(err);
+                return callback(err)
               }
 
-              return callback(null, ent);
-            });
-          });
-        });
+              return callback(null, ent)
+            })
+          })
+        })
       }
 
       // Version found
 
-      ++stats.vhit;
-      var key = dataKey(qent, id, version);
-      var record = cache.get(key);
+      ++stats.vhit
+      var key = dataKey(qent, id, version)
+      var record = cache.get(key)
       if (record) {
-
         // Entry found (cache)
 
-        self.log.debug('hit', 'lru', key);
-        ++stats.lru_hit;
-        return callback(null, qent.make$(record));
+        self.log.debug('hit', 'lru', key)
+        ++stats.lru_hit
+        return callback(null, qent.make$(record))
       }
 
       // Entry not found (evicted from cache)
 
-      self.log.debug('miss', 'lru', key);
-      ++stats.lru_miss;
+      self.log.debug('miss', 'lru', key)
+      ++stats.lru_miss
 
-      self.act({ role: 'cache', cmd: 'get' }, { key: key }, function (err, result) {
+      self.act({ role: 'cache', cmd: 'get' }, { key: key }, function(
+        err,
+        result
+      ) {
         var ent = result && result.value
 
         if (err) {
-          ++stats.cache_errs;
-          return callback(err);
+          ++stats.cache_errs
+          return callback(err)
         }
 
         // Entry found (upstream)
 
         if (ent) {
-          ++stats.net_hit;
-          cache.set(key, ent);
-          self.log.debug('hit', 'net', key);
-          return callback(null, qent.make$(ent));
+          ++stats.net_hit
+          cache.set(key, ent)
+          self.log.debug('hit', 'net', key)
+          return callback(null, qent.make$(ent))
         }
 
         // Not found (upstream)
 
-        ++stats.net_miss;
-        self.log.debug('miss', 'net', key);
-        return callback(null, null);
-      });
-    });
-  };
+        ++stats.net_miss
+        self.log.debug('miss', 'net', key)
+        return callback(null, null)
+      })
+    })
+  }
 
   // Cache remove
 
-  var remove = function remove (args, callback) {
+  var remove = function remove(args, callback) {
+    var self = this
 
-    var self = this;
-
-    this.prior(args, function (err, ent) {
-
+    this.prior(args, function(err, ent) {
       if (err) {
-        return callback(err);
+        return callback(err)
       }
 
-      var vkey = versionKey(args.qent, args.q.id);    // Only called with a valid entity id
-      self.act({ role: 'cache', cmd: 'set' }, { key: vkey, val: -1, expires: settings.expires }, function (err, result) {
-        var ent = result && result.value
+      var vkey = versionKey(args.qent, args.q.id) // Only called with a valid entity id
+      self.act(
+        { role: 'cache', cmd: 'set' },
+        { key: vkey, val: -1, expires: settings.expires },
+        function(err, result) {
+          var ent = result && result.value
 
-        if (err) {
-          ++stats.cache_errs;
-          return callback(err);
+          if (err) {
+            ++stats.cache_errs
+            return callback(err)
+          }
+
+          ++stats.drop
+          self.log.debug('drop', vkey)
+          return callback(null, ent)
         }
-
-        ++stats.drop;
-        self.log.debug('drop', vkey);
-        return callback(null, ent);
-      });
-    });
-  };
+      )
+    })
+  }
 
   // Cache list
 
-  var list = function list (args, callback) {
-
+  var list = function list(args, callback) {
     // Pass-through to underlying cache
 
-    return this.prior(args, callback);
-  };
+    return this.prior(args, callback)
+  }
 
   // Register cache interface
 
-  var registerHandlers = function (args, flags) {
-
-    if( flags.exact ) {
-      seneca.add(_.extend({}, args, { role: 'entity', cmd: 'save' }), save);
-      seneca.add(_.extend({}, args, { role: 'entity', cmd: 'load' }), load);
-      seneca.add(_.extend({}, args, { role: 'entity', cmd: 'list' }), list);
-      seneca.add(_.extend({}, args, { role: 'entity', cmd: 'remove' }), remove);
+  var registerHandlers = function(args, flags) {
+    if (flags.exact) {
+      seneca.add(_.extend({}, args, { role: 'entity', cmd: 'save' }), save)
+      seneca.add(_.extend({}, args, { role: 'entity', cmd: 'load' }), load)
+      seneca.add(_.extend({}, args, { role: 'entity', cmd: 'list' }), list)
+      seneca.add(_.extend({}, args, { role: 'entity', cmd: 'remove' }), remove)
       return
     }
 
     var actions = {
-      save: save, load: load, list: list, remove: remove
+      save: save,
+      load: load,
+      list: list,
+      remove: remove
     }
 
     var core_patterns = [
@@ -330,38 +336,35 @@ module.exports = function (options) {
       { role: 'entity', cmd: 'remove' }
     ]
 
-    _.each( core_patterns, function( core_pat ) {
-      var pats = seneca.list( core_pat )
-      _.each( pats, function( pat ) {
+    _.each(core_patterns, function(core_pat) {
+      var pats = seneca.list(core_pat)
+      _.each(pats, function(pat) {
         //console.log(core_pat, pat, actions[core_pat.cmd].name)
-        seneca.add( pat, actions[core_pat.cmd] )
+        seneca.add(pat, actions[core_pat.cmd])
       })
     })
-  };
+  }
 
   if (settings.entities) {
-    _.each(settings.entities, function (entspec) {
-
+    _.each(settings.entities, function(entspec) {
       registerHandlers(
-        _.isString(entspec) ? seneca.util.parsecanon(entspec) : entspec, 
-        {exact:true}
-      );
-    });
-  }
-  else {
-    registerHandlers(null,{exact:false});
+        _.isString(entspec) ? seneca.util.parsecanon(entspec) : entspec,
+        { exact: true }
+      )
+    })
+  } else {
+    registerHandlers(null, { exact: false })
   }
 
   // Register cache statistics action
 
-  seneca.add({ plugin: 'vcache', cmd: 'stats' }, function (args, next) {
+  seneca.add({ plugin: 'vcache', cmd: 'stats' }, function(args, next) {
+    var result = _.clone(stats)
+    result.hotsize = cache.keys().length
+    result.end = Date.now()
+    this.log.debug('stats', result)
+    return next(null, result)
+  })
 
-    var result = _.clone(stats);
-    result.hotsize = cache.keys().length;
-    result.end = Date.now();
-    this.log.debug('stats', result);
-    return next(null, result);
-  });
-
-  return { name: 'vcache' };
-};
+  return { name: 'vcache' }
+}
