@@ -62,7 +62,7 @@ module.exports = function(options) {
 
   // Cache write
 
-  var writeKey = function(seneca, vkey, callback) {
+  var writeKey = function(seneca, vkey, reply) {
     // New item
 
     var item = {
@@ -74,15 +74,15 @@ module.exports = function(options) {
     seneca.act({ role: 'cache', cmd: 'add' }, item, function(err, result) {
       if (err) {
         ++stats.cache_errs
-        return callback(err)
+        return reply(err)
       }
 
       ++stats.vadd
-      return callback(null)
+      return reply()
     })
   }
 
-  var writeData = function(seneca, ent, version, callback) {
+  var writeData = function(seneca, ent, version, reply) {
     var key = dataKey(ent, ent.id, version)
     seneca.log.debug('set', key)
 
@@ -95,23 +95,24 @@ module.exports = function(options) {
 
         if (err) {
           ++stats.cache_errs
-          return callback(err)
+          return reply(err)
         }
 
         ++stats.set
-        return callback(null, key)
+        return reply(key)
       }
     )
   }
 
-  var save = function save(args, callback) {
+  var save = function vcache_save(msg, reply) {
     var self = this
+    var save_prior = this.prior
 
     // Pass to lower priority entity action first
 
-    this.prior(args, function(err, ent) {
+    save_prior.call(self, msg, function(err, ent) {
       if (err) {
-        return callback(err)
+        return reply(err)
       }
 
       // Generate version key
@@ -126,7 +127,7 @@ module.exports = function(options) {
 
         if (err) {
           ++stats.cache_errs
-          return callback(err)
+          return reply(err)
         }
 
         if (version === false) {
@@ -134,15 +135,11 @@ module.exports = function(options) {
 
           writeKey(self, vkey, function(err) {
             if (err) {
-              return callback(err)
+              return reply(err)
             }
 
             writeData(self, ent, 0, function(err, out) {
-              if (err) {
-                return callback(err)
-              }
-
-              return callback(null, ent)
+              reply(err || ent)
             })
           })
 
@@ -153,11 +150,7 @@ module.exports = function(options) {
 
         ++stats.vinc
         writeData(self, ent, version, function(err, out) {
-          if (err) {
-            return callback(err)
-          }
-
-          return callback(null, ent)
+          reply(err || ent)
         })
       })
     })
@@ -165,17 +158,18 @@ module.exports = function(options) {
 
   // Cache read
 
-  var load = function load(args, callback) {
+  var load = function vcache_load(msg, reply) {
     var self = this
-    var qent = args.qent
+    var load_prior = this.prior
+    var qent = msg.qent
 
     // Verify id format is compatible
 
-    if (!args.q.id || Object.keys(args.q).length !== 1) {
-      return this.prior(args, callback)
+    if (!msg.q.id || Object.keys(msg.q).length !== 1) {
+      return load_prior.call(self, msg, reply)
     }
 
-    var id = args.q.id
+    var id = msg.q.id
 
     // Lookup version key
 
@@ -188,7 +182,7 @@ module.exports = function(options) {
 
       if (err) {
         ++stats.cache_errs
-        return callback(err)
+        return reply(err)
       }
 
       ++stats.get
@@ -204,23 +198,19 @@ module.exports = function(options) {
 
         // Pass to lower priority handler
 
-        return this.prior(args, function(err, ent) {
+        return load_prior.call(self, msg, function(err, ent) {
           if (err || !ent) {
             // Error or not found
-            return callback(err, null)
+            return reply(err)
           }
 
           writeKey(self, vkey, function(err) {
             if (err) {
-              return callback(err)
+              return reply(err)
             }
 
             return writeData(self, ent, 0, function(err, version) {
-              if (err) {
-                return callback(err)
-              }
-
-              return callback(null, ent)
+              return reply(err || ent)
             })
           })
         })
@@ -236,7 +226,7 @@ module.exports = function(options) {
 
         self.log.debug('hit', 'lru', key)
         ++stats.lru_hit
-        return callback(null, qent.make$(record))
+        return reply(qent.make$(record))
       }
 
       // Entry not found (evicted from cache)
@@ -252,7 +242,7 @@ module.exports = function(options) {
 
         if (err) {
           ++stats.cache_errs
-          return callback(err)
+          return reply(err)
         }
 
         // Entry found (upstream)
@@ -261,29 +251,30 @@ module.exports = function(options) {
           ++stats.net_hit
           cache.set(key, ent)
           self.log.debug('hit', 'net', key)
-          return callback(null, qent.make$(ent))
+          return reply(qent.make$(ent))
         }
 
         // Not found (upstream)
 
         ++stats.net_miss
         self.log.debug('miss', 'net', key)
-        return callback(null, null)
+        return reply()
       })
     })
   }
 
   // Cache remove
 
-  var remove = function remove(args, callback) {
+  var remove = function vcache_remove(msg, reply) {
     var self = this
+    var remove_prior = this.prior
 
-    this.prior(args, function(err, ent) {
+    remove_prior.call(self, msg, function(err, ent) {
       if (err) {
-        return callback(err)
+        return reply(err)
       }
 
-      var vkey = versionKey(args.qent, args.q.id) // Only called with a valid entity id
+      var vkey = versionKey(msg.qent, msg.q.id) // Only called with a valid entity id
       self.act(
         { role: 'cache', cmd: 'set' },
         { key: vkey, val: -1, expires: settings.expires },
@@ -292,12 +283,12 @@ module.exports = function(options) {
 
           if (err) {
             ++stats.cache_errs
-            return callback(err)
+            return reply(err)
           }
 
           ++stats.drop
           self.log.debug('drop', vkey)
-          return callback(null, ent)
+          return reply(ent)
         }
       )
     })
@@ -305,20 +296,22 @@ module.exports = function(options) {
 
   // Cache list
 
-  var list = function list(args, callback) {
+  var list = function vcache_list(msg, reply) {
     // Pass-through to underlying cache
+    var self = this
+    var list_prior = this.prior
 
-    return this.prior(args, callback)
+    return list_prior.call(self, msg, reply)
   }
 
   // Register cache interface
 
-  var registerHandlers = function(args, flags) {
+  var registerHandlers = function(msg, flags) {
     if (flags.exact) {
-      seneca.add(_.extend({}, args, { role: 'entity', cmd: 'save' }), save)
-      seneca.add(_.extend({}, args, { role: 'entity', cmd: 'load' }), load)
-      seneca.add(_.extend({}, args, { role: 'entity', cmd: 'list' }), list)
-      seneca.add(_.extend({}, args, { role: 'entity', cmd: 'remove' }), remove)
+      seneca.add(_.extend({}, msg, { role: 'entity', cmd: 'save' }), save)
+      seneca.add(_.extend({}, msg, { role: 'entity', cmd: 'load' }), load)
+      seneca.add(_.extend({}, msg, { role: 'entity', cmd: 'list' }), list)
+      seneca.add(_.extend({}, msg, { role: 'entity', cmd: 'remove' }), remove)
       return
     }
 
@@ -358,7 +351,7 @@ module.exports = function(options) {
 
   // Register cache statistics action
 
-  seneca.add({ plugin: 'vcache', cmd: 'stats' }, function(args, next) {
+  seneca.add({ plugin: 'vcache', cmd: 'stats' }, function(msg, next) {
     var result = _.clone(stats)
     result.hotsize = cache.keys().length
     result.end = Date.now()
