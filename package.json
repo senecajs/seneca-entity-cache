@@ -1,10 +1,11 @@
 {
   "name": "seneca-vcache",
-  "version": "0.5.1",
+  "version": "0.5.2",
   "description": "Versioned caching plugin for seneca",
   "main": "vcache.js",
   "scripts": {
-    "test": "lab -P test -t 80 -I URL,URLSearchParams,igUint64Array,BigInt64Array,BigInt,BigUint64Array",
+    "test": "npm run lab && SENECA_CACHE_PLUGIN=cache npm run lab",
+    "lab": "lab -P test -t 80 -I URL,URLSearchParams,igUint64Array,BigInt64Array,BigInt,BigUint64Array",
     "prettier": "prettier --write --no-semi --single-quote *.js lib/*.js test/*.js",
     "coveralls": "lab -s -P test -r lcov | coveralls",
     "clean-npm": "rm -rf node_modules package-lock.json",
@@ -30,7 +31,8 @@
     "lru-cache": "^5.1.1"
   },
   "devDependencies": {
-    "@seneca/memcached-cache": "^1.0.1",
+    "@seneca/cache": "^0.1.1",
+    "@seneca/memcached-cache": "^1.1.0",
     "code": "^5.2.4",
     "hoek": "^6.1.2",
     "items": "^2.1.2",

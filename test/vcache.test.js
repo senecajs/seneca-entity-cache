@@ -1,5 +1,7 @@
 // Load modules
 
+var SENECA_CACHE_PLUGIN = process.env.SENECA_CACHE_PLUGIN || 'memcached-cache'
+
 var Util = require('util')
 var Crypto = require('crypto')
 
@@ -22,10 +24,7 @@ var expect = Code.expect
 process.setMaxListeners(0) // Remove warning caused by creating multiple framework instances
 
 it('writes then reads a record', function(done) {
-  var seneca = Seneca().test()
-  seneca.use('entity')
-  seneca.use('memcached-cache')
-  seneca.use('..')
+  var seneca = seneca_instance()
 
   seneca.ready(function() {
     var type = internals.type()
@@ -113,10 +112,7 @@ it('writes then reads a record', function(done) {
 })
 
 it('updates a record', function(done) {
-  var seneca = Seneca().test()
-  seneca.use('entity')
-  seneca.use('memcached-cache')
-  seneca.use('..')
+  var seneca = seneca_instance()
 
   seneca.ready(function() {
     var type = internals.type()
@@ -241,7 +237,7 @@ describe('save()', function() {
     seneca.use('..')
 
     seneca.ready(function() {
-      var control = this.export('memcached-cache/control')
+      var control = this.export(SENECA_CACHE_PLUGIN + '/control')
       control.incr = true
 
       var type = internals.type()
@@ -282,7 +278,7 @@ describe('save()', function() {
     seneca.use('..')
 
     seneca.ready(function() {
-      var control = this.export('memcached-cache/control')
+      var control = this.export(SENECA_CACHE_PLUGIN + '/control')
       control.add = true
 
       var type = internals.type()
@@ -319,11 +315,11 @@ describe('save()', function() {
   it('handles errors in upstream cache (set)', function(done) {
     var seneca = Seneca().test()
     seneca.use('entity')
-    seneca.use('./broken') //, { disable: { set: true } });
+    seneca.use('./broken')
     seneca.use('..')
 
     seneca.ready(function() {
-      var control = this.export('memcached-cache/control')
+      var control = this.export(SENECA_CACHE_PLUGIN + '/control')
       control.set = true
 
       var type = internals.type()
@@ -360,7 +356,7 @@ describe('save()', function() {
   it('handles errors lower priority entity service', function(done) {
     var seneca = Seneca().test()
     seneca.use('entity')
-    seneca.use('memcached-cache')
+    seneca.use(SENECA_CACHE_PLUGIN)
 
     seneca.ready(function() {
       seneca.add({ role: 'entity', cmd: 'save' }, function bad_entity_save(
@@ -373,8 +369,6 @@ describe('save()', function() {
       seneca.use('..')
 
       seneca.ready(function() {
-        // console.log(this.find('role:entity,cmd:save'))
-
         var type = internals.type()
         var entry = seneca.make(type, { a: 1 })
 
@@ -398,7 +392,7 @@ describe('save()', function() {
     seneca.use('..')
 
     seneca.ready(function() {
-      var control = this.export('memcached-cache/control')
+      var control = this.export(SENECA_CACHE_PLUGIN + '/control')
 
       var type = internals.type()
       var entry = seneca.make(type, { a: 1 })
@@ -453,10 +447,7 @@ describe('save()', function() {
 
 describe('load()', function() {
   it('handles an object criteria', function(done) {
-    var seneca = Seneca().test()
-    seneca.use('entity')
-    seneca.use('memcached-cache')
-    seneca.use('..')
+    var seneca = seneca_instance()
 
     seneca.ready(function() {
       var type = internals.type()
@@ -481,10 +472,7 @@ describe('load()', function() {
   })
 
   it('skips an object criteria with multiple keys', function(done) {
-    var seneca = Seneca().test()
-    seneca.use('entity')
-    seneca.use('memcached-cache')
-    seneca.use('..')
+    var seneca = seneca_instance()
 
     seneca.ready(function() {
       var type = internals.type()
@@ -509,10 +497,7 @@ describe('load()', function() {
   })
 
   it('handles a number id', function(done) {
-    var seneca = Seneca().test()
-    seneca.use('entity')
-    seneca.use('memcached-cache')
-    seneca.use('..')
+    var seneca = seneca_instance()
 
     seneca.ready(function() {
       var type = internals.type()
@@ -537,10 +522,7 @@ describe('load()', function() {
   })
 
   it('reports miss when item not found', function(done) {
-    var seneca = Seneca().test()
-    seneca.use('entity')
-    seneca.use('memcached-cache')
-    seneca.use('..')
+    var seneca = seneca_instance()
 
     var type = internals.type()
     var entry = seneca.make(type)
@@ -572,10 +554,7 @@ describe('load()', function() {
   })
 
   it('adds a record from full cache to lru cache', function(done) {
-    var seneca = Seneca().test()
-    seneca.use('entity')
-    seneca.use('memcached-cache')
-    seneca.use('..')
+    var seneca = seneca_instance()
 
     seneca.ready(function() {
       var type = internals.type()
@@ -626,10 +605,7 @@ describe('load()', function() {
   })
 
   it('handles evicted value from lru cache', function(done) {
-    var seneca = Seneca().test()
-    seneca.use('entity')
-    seneca.use('memcached-cache')
-    seneca.use('..', { maxhot: 1 })
+    var seneca = seneca_instance({ maxhot: 1 })
 
     seneca.ready(function() {
       var type = internals.type()
@@ -692,10 +668,7 @@ describe('load()', function() {
   })
 
   it('handles evicted value from lru cache and upstream', function(done) {
-    var seneca = Seneca().test()
-    seneca.use('entity')
-    seneca.use('memcached-cache')
-    seneca.use('..', { maxhot: 1 })
+    var seneca = seneca_instance({ maxhot: 1 })
 
     seneca.ready(function() {
       var type = internals.type()
@@ -780,7 +753,7 @@ describe('load()', function() {
     var entry = seneca.make(type)
 
     seneca.ready(function() {
-      var control = this.export('memcached-cache/control')
+      var control = this.export(SENECA_CACHE_PLUGIN + '/control')
       control.get = true
 
       seneca.make(type).load$('unknown', function(err, loaded) {
@@ -811,12 +784,7 @@ describe('load()', function() {
   })
 
   it('passes lower priority load error', function(done) {
-    var seneca = Seneca()
-      .test()
-      .quiet()
-    seneca.use('entity')
-    seneca.use('memcached-cache')
-    seneca.use('..')
+    var seneca = seneca_instance()
 
     seneca.ready(function() {
       seneca.add({ role: 'entity', cmd: 'load' }, function(ignore, callback) {
@@ -843,7 +811,7 @@ describe('load()', function() {
     seneca.use('..', { maxhot: 1 })
 
     seneca.ready(function() {
-      var control = this.export('memcached-cache/control')
+      var control = this.export(SENECA_CACHE_PLUGIN + '/control')
       control.get = false
 
       var type = internals.type()
@@ -911,11 +879,7 @@ describe('load()', function() {
 
 describe('remove()', function() {
   it('passes lower priority remove error', function(done) {
-    var seneca = Seneca().test()
-    seneca.use('entity')
-    seneca.use('memcached-cache')
-
-    seneca.use('..')
+    var seneca = seneca_instance()
 
     var type = internals.type()
     var entry = seneca.make(type)
@@ -933,10 +897,7 @@ describe('remove()', function() {
   })
 
   it('skips unsupported id types', function(done) {
-    var seneca = Seneca().test()
-    seneca.use('entity')
-    seneca.use('memcached-cache')
-    seneca.use('..')
+    var seneca = seneca_instance()
 
     var type = internals.type()
     var entry = seneca.make(type, { b: '123', a: 4 })
@@ -957,7 +918,7 @@ describe('remove()', function() {
     var entry = seneca.make(type)
 
     seneca.ready(function() {
-      var control = this.export('memcached-cache/control')
+      var control = this.export(SENECA_CACHE_PLUGIN + '/control')
       control.set = true
 
       seneca.make(type, { id: 'none' }).remove$(function(err) {
@@ -989,10 +950,7 @@ describe('remove()', function() {
 
 describe('list()', function() {
   it('returns list of entries', function(done) {
-    var seneca = Seneca().test()
-    seneca.use('entity')
-    seneca.use('memcached-cache')
-    seneca.use('..')
+    var seneca = seneca_instance()
 
     var entry = seneca.make('foo', { a: 4 })
     entry.save$(function(err, saved) {
@@ -1010,10 +968,7 @@ describe('list()', function() {
   })
 
   it('returns empty list', function(done) {
-    var seneca = Seneca().test()
-    seneca.use('entity')
-    seneca.use('memcached-cache')
-    seneca.use('..')
+    var seneca = seneca_instance()
 
     seneca.ready(function() {
       var entry = seneca.make('foo', { a: 5 })
@@ -1028,10 +983,7 @@ describe('list()', function() {
 
 describe('registerHandlers()', function() {
   it('registers plugin with entities setting (object)', function(done) {
-    var seneca = Seneca().test()
-    seneca.use('entity')
-    seneca.use('memcached-cache')
-    seneca.use('..', { entities: [{ base: 'test' }] })
+    var seneca = seneca_instance({ entities: [{ base: 'test' }] })
 
     var entry = seneca.make('test', 'foo', { a: 4 })
     entry.save$(function(err, saved) {
@@ -1068,10 +1020,7 @@ describe('registerHandlers()', function() {
   })
 
   it('registers plugin with entities setting (string)', function(done) {
-    var seneca = Seneca().test()
-    seneca.use('entity')
-    seneca.use('memcached-cache')
-    seneca.use('..', { entities: ['-/test/-'] })
+    var seneca = seneca_instance({ entities: ['-/test/-'] })
 
     var entry = seneca.make('test', 'foo', { a: 4 })
     entry.save$(function(err, saved) {
@@ -1127,4 +1076,14 @@ function make_it(lab) {
       })
     )
   }
+}
+
+function seneca_instance(opts) {
+  var seneca = Seneca()
+    .test()
+    .quiet()
+  seneca.use('entity')
+  seneca.use(SENECA_CACHE_PLUGIN)
+  seneca.use('..', opts)
+  return seneca
 }
