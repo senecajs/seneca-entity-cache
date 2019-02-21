@@ -7,5 +7,5 @@ node_js:
 
 services:
   - memcached
-  - redis
+  - redis-server
 
