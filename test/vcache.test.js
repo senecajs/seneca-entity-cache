@@ -31,7 +31,6 @@ it('writes then reads a record', function(done) {
     var entry = seneca.make(type, { a: 1 })
 
     // Save
-
     entry.save$(function(err, saved) {
       expect(err).to.not.exist()
       expect(saved.a).to.equal(entry.a)
@@ -152,8 +151,6 @@ it('updates a record', function(done) {
             expect(stats).to.contain({
               set: 2,
               get: 0,
-              vinc: 1,
-              vadd: 1,
               vmiss: 0,
               vhit: 0,
               lru_hit: 0,
@@ -161,8 +158,7 @@ it('updates a record', function(done) {
               lru_miss: 0,
               net_miss: 0,
               drop: 0,
-              cache_errs: 0,
-              hotsize: 2
+              cache_errs: 0
             })
 
             // Load
@@ -180,8 +176,6 @@ it('updates a record', function(done) {
                 expect(stats).to.contain({
                   set: 2,
                   get: 1,
-                  vinc: 1,
-                  vadd: 1,
                   vmiss: 0,
                   vhit: 1,
                   lru_hit: 1,
@@ -189,8 +183,7 @@ it('updates a record', function(done) {
                   lru_miss: 0,
                   net_miss: 0,
                   drop: 0,
-                  cache_errs: 0,
-                  hotsize: 2
+                  cache_errs: 0
                 })
 
                 // Remove
@@ -204,8 +197,6 @@ it('updates a record', function(done) {
                     expect(stats).to.contain({
                       set: 2,
                       get: 1,
-                      vinc: 1,
-                      vadd: 1,
                       vmiss: 0,
                       vhit: 1,
                       lru_hit: 1,
@@ -213,8 +204,7 @@ it('updates a record', function(done) {
                       lru_miss: 0,
                       net_miss: 0,
                       drop: 1,
-                      cache_errs: 0,
-                      hotsize: 2
+                      cache_errs: 0
                     })
 
                     done()
@@ -271,88 +261,6 @@ describe('save()', function() {
     })
   })
 
-  it('handles errors in upstream cache (add)', function(done) {
-    var seneca = Seneca().test()
-    seneca.use('entity')
-    seneca.use('./broken') //, { disable: { add: true } });
-    seneca.use('..')
-
-    seneca.ready(function() {
-      var control = this.export(SENECA_CACHE_PLUGIN + '/control')
-      control.add = true
-
-      var type = internals.type()
-      var entry = seneca.make(type, { a: 1 })
-
-      // Save
-
-      entry.save$(function(err, saved) {
-        expect(err).to.exist()
-
-        seneca.act({ plugin: 'vcache', cmd: 'stats' }, function(err, stats) {
-          expect(stats).to.contain({
-            set: 0,
-            get: 0,
-            vinc: 0,
-            vadd: 0,
-            vmiss: 0,
-            vhit: 0,
-            lru_hit: 0,
-            net_hit: 0,
-            lru_miss: 0,
-            net_miss: 0,
-            drop: 0,
-            cache_errs: 1,
-            hotsize: 0
-          })
-
-          done()
-        })
-      })
-    })
-  })
-
-  it('handles errors in upstream cache (set)', function(done) {
-    var seneca = Seneca().test()
-    seneca.use('entity')
-    seneca.use('./broken')
-    seneca.use('..')
-
-    seneca.ready(function() {
-      var control = this.export(SENECA_CACHE_PLUGIN + '/control')
-      control.set = true
-
-      var type = internals.type()
-      var entry = seneca.make(type, { a: 1 })
-
-      // Save
-
-      entry.save$(function(err, saved) {
-        expect(err).to.exist()
-
-        seneca.act({ plugin: 'vcache', cmd: 'stats' }, function(err, stats) {
-          expect(stats).to.contain({
-            set: 0,
-            get: 0,
-            vinc: 0,
-            vadd: 1,
-            vmiss: 0,
-            vhit: 0,
-            lru_hit: 0,
-            net_hit: 0,
-            lru_miss: 0,
-            net_miss: 0,
-            drop: 0,
-            cache_errs: 1,
-            hotsize: 1
-          })
-
-          done()
-        })
-      })
-    })
-  })
-
   it('handles errors lower priority entity service', function(done) {
     var seneca = Seneca().test()
     seneca.use('entity')
@@ -382,10 +290,9 @@ describe('save()', function() {
     })
   })
 
-  it('handles upstream error when updating a record (writeData)', function(done) {
-    var seneca = Seneca()
-      .test()
-      .quiet()
+  it('handles upstream error when updating a record (writeData) - qqq', function(done) {
+    var seneca = Seneca().test()
+    //.quiet()
     seneca.use('entity')
 
     seneca.use('./broken')
@@ -423,7 +330,6 @@ describe('save()', function() {
               expect(stats).to.contain({
                 set: 1,
                 get: 0,
-                vinc: 1,
                 vadd: 1,
                 vmiss: 0,
                 vhit: 0,
@@ -432,8 +338,7 @@ describe('save()', function() {
                 lru_miss: 0,
                 net_miss: 0,
                 drop: 1,
-                cache_errs: 1,
-                hotsize: 2
+                cache_errs: 1
               })
 
               done()
@@ -1079,9 +984,8 @@ function make_it(lab) {
 }
 
 function seneca_instance(opts) {
-  var seneca = Seneca()
-    .test()
-    .quiet()
+  var seneca = Seneca().test()
+  //.quiet()
   seneca.use('entity')
   seneca.use(SENECA_CACHE_PLUGIN)
   seneca.use('..', opts)

@@ -1,10 +1,10 @@
 {
   "name": "seneca-vcache",
-  "version": "0.5.2",
+  "version": "0.6.0",
   "description": "Versioned caching plugin for seneca",
   "main": "vcache.js",
   "scripts": {
-    "test": "npm run lab && SENECA_CACHE_PLUGIN=cache npm run lab",
+    "test": "npm run lab && SENECA_CACHE_PLUGIN=cache npm run lab && SENECA_CACHE_PLUGIN=redis-cache npm run lab",
     "lab": "lab -P test -t 80 -I URL,URLSearchParams,igUint64Array,BigInt64Array,BigInt,BigUint64Array",
     "prettier": "prettier --write --no-semi --single-quote *.js lib/*.js test/*.js",
     "coveralls": "lab -s -P test -r lcov | coveralls",
@@ -27,18 +27,19 @@
   "author": "Richard Rodger (http://richardrodger.com)",
   "license": "MIT",
   "dependencies": {
-    "underscore": "^1.6.0",
-    "lru-cache": "^5.1.1"
+    "lru-cache": "^5.1.1",
+    "underscore": "^1.6.0"
   },
   "devDependencies": {
-    "@seneca/cache": "^0.1.1",
+    "@seneca/cache": "^0.1.2",
+    "@seneca/redis-cache": "^0.1.0",
     "@seneca/memcached-cache": "^1.1.0",
     "code": "^5.2.4",
     "hoek": "^6.1.2",
     "items": "^2.1.2",
     "lab": "^18.0.2",
     "prettier": "^1.16.4",
-    "seneca": "^3.8.2",
+    "seneca": "plugin",
     "seneca-entity": "^2.5.1"
   },
   "files": [

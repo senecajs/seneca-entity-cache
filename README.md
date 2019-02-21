@@ -53,6 +53,11 @@ You'll also need [memcached](http://memcached.org/)
 Or... you can use <a href="http://redis.io">redis</a>: <a href="https://github.com/darsee/seneca-redis-cache">seneca-redis-cache</a>.
 
 
+## Testing
+
+The unit tests require a running memcached and redis.
+
+
 ## Actions
 
 ### _plugin:vcache, cmd:stats_

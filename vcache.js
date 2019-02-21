@@ -71,7 +71,7 @@ module.exports = function(options) {
       expires: settings.expires
     }
 
-    seneca.act({ role: 'cache', cmd: 'add' }, item, function(err, result) {
+    seneca.act({ role: 'cache', cmd: 'set' }, item, function(err, result) {
       if (err) {
         ++stats.cache_errs
         return reply(err)
@@ -332,7 +332,6 @@ module.exports = function(options) {
     _.each(core_patterns, function(core_pat) {
       var pats = seneca.list(core_pat)
       _.each(pats, function(pat) {
-        //console.log(core_pat, pat, actions[core_pat.cmd].name)
         seneca.add(pat, actions[core_pat.cmd])
       })
     })
