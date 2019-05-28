@@ -88,7 +88,7 @@ function entity_cache(options) {
     var key = dataKey(ent, ent.id, version)
     seneca.log.debug('set', key)
 
-    lrucache.set(key, ent)
+    lrucache.set(key, ent.data$())
     seneca.act(
       { role: 'cache', cmd: 'set' },
       { key: key, val: ent.data$(), expires: options.expires },
@@ -240,7 +240,7 @@ function entity_cache(options) {
         err,
         result
       ) {
-        var ent = result && result.value
+        var ent_data = result && result.value
 
         if (err) {
           ++stats.cache_errs
@@ -249,11 +249,11 @@ function entity_cache(options) {
 
         // Entry found (upstream)
 
-        if (ent) {
+        if (ent_data) {
           ++stats.net_hit
-          lrucache.set(key, ent)
+          lrucache.set(key, ent_data)
           self.log.debug('hit', 'net', key)
-          return reply(qent.make$(ent))
+          return reply(qent.make$(ent_data))
         }
 
         // Not found (upstream)
