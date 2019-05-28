@@ -1,7 +1,6 @@
 /* Copyright © 2012-2019 Richard Rodger and other contributors, MIT License. */
 'use strict'
 
-var _ = require('underscore')
 var LRUCache = require('lru-cache')
 
 module.exports = entity_cache
@@ -107,7 +106,7 @@ function entity_cache(options) {
     )
   }
 
-  var save = function vcache_save(msg, reply) {
+  var save_action = function entity_cache_save(msg, reply) {
     var self = this
     var save_prior = this.prior
 
@@ -161,7 +160,7 @@ function entity_cache(options) {
 
   // Cache read
 
-  var load = function vcache_load(msg, reply) {
+  var load_action = function entity_cache_load(msg, reply) {
     var self = this
     var load_prior = this.prior
     var qent = msg.qent
@@ -268,7 +267,7 @@ function entity_cache(options) {
 
   // Cache remove
 
-  var remove = function vcache_remove(msg, reply) {
+  var remove_action = function entity_cache_remove(msg, reply) {
     var self = this
     var remove_prior = this.prior
 
@@ -297,6 +296,7 @@ function entity_cache(options) {
 
   // Cache list
 
+  /* NOTE: NOT IMPLEMENTED (YET)
   var list = function vcache_list(msg, reply) {
     // Pass-through to underlying cache
     var self = this
@@ -304,44 +304,45 @@ function entity_cache(options) {
 
     return list_prior.call(self, msg, reply)
   }
-
+  */
+  
   // Register cache interface
 
   var registerHandlers = function(msg, flags) {
     if (flags.exact) {
-      seneca.add(_.extend({}, msg, { role: 'entity', cmd: 'save' }), save)
-      seneca.add(_.extend({}, msg, { role: 'entity', cmd: 'load' }), load)
-      seneca.add(_.extend({}, msg, { role: 'entity', cmd: 'list' }), list)
-      seneca.add(_.extend({}, msg, { role: 'entity', cmd: 'remove' }), remove)
+      seneca.add({...msg, role: 'entity', cmd: 'save' }, save_action)
+      seneca.add({...msg, role: 'entity', cmd: 'load' }, load_action)
+      // seneca.add({...msg, role: 'entity', cmd: 'list' }, list)
+      seneca.add({...msg, role: 'entity', cmd: 'remove' }, remove_action)
       return
     }
 
     var actions = {
-      save: save,
-      load: load,
-      list: list,
-      remove: remove
+      save: save_action,
+      load: load_action,
+      //list: list,
+      remove: remove_action
     }
 
     var core_patterns = [
       { role: 'entity', cmd: 'save' },
       { role: 'entity', cmd: 'load' },
-      { role: 'entity', cmd: 'list' },
+      //{ role: 'entity', cmd: 'list' },
       { role: 'entity', cmd: 'remove' }
     ]
 
-    _.each(core_patterns, function(core_pat) {
+    core_patterns.forEach(function(core_pat) {
       var pats = seneca.list(core_pat)
-      _.each(pats, function(pat) {
+      pats.forEach(function(pat) {
         seneca.add(pat, actions[core_pat.cmd])
       })
     })
   }
 
   if (options.entities) {
-    _.each(options.entities, function(entspec) {
+    options.entities.forEach(function(entspec) {
       registerHandlers(
-        _.isString(entspec) ? seneca.util.parsecanon(entspec) : entspec,
+        'string' === typeof(entspec) ? seneca.util.parsecanon(entspec) : entspec,
         { exact: true }
       )
     })
@@ -353,7 +354,7 @@ function entity_cache(options) {
 
 
   function cmd_stats(msg, reply) {
-    var result = _.clone(stats)
+    var result = {...stats}
     result.hotsize = lrucache.keys().length
     result.end = Date.now()
     this.log.debug('stats', result)
