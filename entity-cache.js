@@ -4,14 +4,14 @@
 var _ = require('underscore')
 var LRUCache = require('lru-cache')
 
-module.exports = vcache
+module.exports = entity_cache
 module.exports.defaults = {
-  prefix: 'seneca-vcache',
+  prefix: 'seneca-entity',
   maxhot: 1111,
   expires: 3600 // 1 Hour
 }
 
-function vcache(options) {
+function entity_cache(options) {
   var seneca = this
 
   // Setup in-memory cache
@@ -36,6 +36,10 @@ function vcache(options) {
     cache_errs: 0
   }
 
+
+  seneca.add('plugin:entity-cache,cmd:stats', cmd_stats)
+
+  
   // Keys
 
   var versionKey = function(ent, id) {
@@ -347,13 +351,14 @@ function vcache(options) {
 
   // Register cache statistics action
 
-  seneca.add({ plugin: 'vcache', cmd: 'stats' }, function(msg, next) {
+
+  function cmd_stats(msg, reply) {
     var result = _.clone(stats)
     result.hotsize = lrucache.keys().length
     result.end = Date.now()
     this.log.debug('stats', result)
-    return next(null, result)
-  })
+    return reply(result)
+  }
 
   return { name: 'vcache' }
 }

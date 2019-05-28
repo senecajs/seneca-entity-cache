@@ -1,11 +1,12 @@
 {
-  "name": "seneca-vcache",
+  "name": "@seneca/entity-cache",
   "version": "0.6.0",
   "description": "Versioned caching plugin for seneca",
-  "main": "vcache.js",
+  "main": "entity-cache.js",
   "scripts": {
     "test": "npm run lab && SENECA_CACHE_PLUGIN=cache npm run lab && SENECA_CACHE_PLUGIN=redis-cache npm run lab",
     "lab": "lab -v -L -P test -t 80 -I URL,URLSearchParams,igUint64Array,BigInt64Array,BigInt,BigUint64Array",
+    "doc": "seneca-doc",
     "prettier": "prettier --write --no-semi --single-quote *.js lib/*.js test/*.js",
     "coveralls": "lab -s -P test -r lcov | coveralls",
     "clean-npm": "rm -rf node_modules package-lock.json",
@@ -43,6 +44,7 @@
     "lab": "^18.0.2",
     "prettier": "^1.17.1",
     "seneca": "plugin",
+    "seneca-doc": "^0.1.2",
     "seneca-entity": "^2.5.1",
     "seneca-promisify": "^0.8.0"
   },

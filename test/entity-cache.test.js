@@ -12,7 +12,7 @@ var Crypto = require('crypto')
 var Code = require('code')
 var Lab = require('lab')
 var Seneca = require('seneca')
-var VCache = require('..')
+var EntityCache = require('..')
 
 // Declare internals
 
@@ -67,7 +67,7 @@ it('writes then reads a record', function(done) {
       expect(err).to.not.exist()
       expect(saved.a).to.equal(entry.a)
 
-      seneca.act({ plugin: 'vcache', cmd: 'stats' }, function(err, stats) {
+      seneca.act({ plugin: 'entity-cache', cmd: 'stats' }, function(err, stats) {
         expect(stats).to.contain({
           set: 1,
           get: 0,
@@ -91,7 +91,7 @@ it('writes then reads a record', function(done) {
           expect(loaded.a).to.equal(entry.a)
           expect(loaded.id).to.equal(saved.id)
 
-          seneca.act({ plugin: 'vcache', cmd: 'stats' }, function(err, stats) {
+          seneca.act({ plugin: 'entity-cache', cmd: 'stats' }, function(err, stats) {
             expect(stats).to.contain({
               set: 1,
               get: 1,
@@ -112,7 +112,7 @@ it('writes then reads a record', function(done) {
 
             loaded.remove$(function(err) {
               expect(err).to.not.exist()
-              seneca.act({ plugin: 'vcache', cmd: 'stats' }, function(
+              seneca.act({ plugin: 'entity-cache', cmd: 'stats' }, function(
                 err,
                 stats
               ) {
@@ -155,7 +155,7 @@ it('updates a record', function(done) {
       var id = saved.id
       saved.b = 5
 
-      seneca.act({ plugin: 'vcache', cmd: 'stats' }, function(err, stats) {
+      seneca.act({ plugin: 'entity-cache', cmd: 'stats' }, function(err, stats) {
         expect(stats).to.contain({
           set: 1,
           get: 0,
@@ -179,7 +179,7 @@ it('updates a record', function(done) {
           expect(modified.b).to.equal(5)
           expect(modified.id).to.equal(id)
 
-          seneca.act({ plugin: 'vcache', cmd: 'stats' }, function(err, stats) {
+          seneca.act({ plugin: 'entity-cache', cmd: 'stats' }, function(err, stats) {
             expect(stats).to.contain({
               set: 2,
               get: 0,
@@ -201,7 +201,7 @@ it('updates a record', function(done) {
               expect(loaded.b).to.equal(5)
               expect(loaded.id).to.equal(id)
 
-              seneca.act({ plugin: 'vcache', cmd: 'stats' }, function(
+              seneca.act({ plugin: 'entity-cache', cmd: 'stats' }, function(
                 err,
                 stats
               ) {
@@ -222,7 +222,7 @@ it('updates a record', function(done) {
 
                 loaded.remove$(function(err) {
                   expect(err).to.not.exist()
-                  seneca.act({ plugin: 'vcache', cmd: 'stats' }, function(
+                  seneca.act({ plugin: 'entity-cache', cmd: 'stats' }, function(
                     err,
                     stats
                   ) {
@@ -258,7 +258,7 @@ describe('save()', function() {
       .quiet()
     seneca.use('entity')
     seneca.use('./broken')
-    seneca.use(VCache)
+    seneca.use(EntityCache)
 
     seneca.ready(function() {
       var control = this.export(SENECA_CACHE_PLUGIN + '/control')
@@ -273,7 +273,7 @@ describe('save()', function() {
         expect(err).to.exist()
         expect(saved).not.exist()
 
-        seneca.act({ plugin: 'vcache', cmd: 'stats' }, function(err, stats) {
+        seneca.act({ plugin: 'entity-cache', cmd: 'stats' }, function(err, stats) {
           expect(stats).to.contain({
             set: 0,
             get: 0,
@@ -311,7 +311,7 @@ describe('save()', function() {
         return callback(new Error('Bad entity service'))
       })
 
-      seneca.use(VCache)
+      seneca.use(EntityCache)
 
       seneca.ready(function() {
         var type = internals.type()
@@ -335,7 +335,7 @@ describe('save()', function() {
     seneca.use('entity')
 
     seneca.use('./broken')
-    seneca.use(VCache)
+    seneca.use(EntityCache)
 
     seneca.ready(function() {
       var control = this.export(SENECA_CACHE_PLUGIN + '/control')
@@ -363,7 +363,7 @@ describe('save()', function() {
 
           saved.remove$(function(err) {
             expect(err).to.not.exist()
-            seneca.act({ plugin: 'vcache', cmd: 'stats' }, function(
+            seneca.act({ plugin: 'entity-cache', cmd: 'stats' }, function(
               err,
               stats
             ) {
@@ -478,7 +478,7 @@ describe('load()', function() {
       expect(err).to.not.exist()
       expect(loaded).to.not.exist()
 
-      seneca.act({ plugin: 'vcache', cmd: 'stats' }, function(err, stats) {
+      seneca.act({ plugin: 'entity-cache', cmd: 'stats' }, function(err, stats) {
         expect(stats).to.contain({
           set: 0,
           get: 1,
@@ -514,7 +514,7 @@ describe('load()', function() {
         expect(err).to.not.exist()
         expect(saved.a).to.equal(entry.a)
 
-        // Add vcache
+        // Add entity-cache
 
         // Load
 
@@ -523,7 +523,7 @@ describe('load()', function() {
           expect(loaded.a).to.equal(entry.a)
           expect(loaded.id).to.equal(saved.id)
 
-          seneca.act({ plugin: 'vcache', cmd: 'stats' }, function(err, stats) {
+          seneca.act({ plugin: 'entity-cache', cmd: 'stats' }, function(err, stats) {
             expect(stats).to.contain({
               set: 1,
               get: 1,
@@ -578,7 +578,7 @@ describe('load()', function() {
             expect(loaded.a).to.equal(entry.a)
             expect(loaded.id).to.equal(saved1.id)
 
-            seneca.act({ plugin: 'vcache', cmd: 'stats' }, function(
+            seneca.act({ plugin: 'entity-cache', cmd: 'stats' }, function(
               err,
               stats
             ) {
@@ -637,7 +637,7 @@ describe('load()', function() {
           // Drop from upstream cache
 
           seneca.act(
-            'role:cache, cmd:delete, key:seneca-vcache~d~0~-/-/' +
+            'role:cache, cmd:delete, key:seneca-entity~d~0~-/-/' +
               type +
               '~' +
               saved1.id,
@@ -651,7 +651,7 @@ describe('load()', function() {
                 expect(err).to.not.exist()
                 expect(loaded).to.be.null()
 
-                seneca.act({ plugin: 'vcache', cmd: 'stats' }, function(
+                seneca.act({ plugin: 'entity-cache', cmd: 'stats' }, function(
                   err,
                   stats
                 ) {
@@ -696,7 +696,7 @@ describe('load()', function() {
       .quiet()
     seneca.use('entity')
     seneca.use('./broken') //, { disable: { get: true } });
-    seneca.use(VCache)
+    seneca.use(EntityCache)
 
     var type = internals.type()
 
@@ -708,7 +708,7 @@ describe('load()', function() {
         expect(err).to.exist()
         expect(loaded).to.not.exist()
 
-        seneca.act({ plugin: 'vcache', cmd: 'stats' }, function(err, stats) {
+        seneca.act({ plugin: 'entity-cache', cmd: 'stats' }, function(err, stats) {
           expect(stats).to.contain({
             set: 0,
             get: 0,
@@ -788,7 +788,7 @@ describe('load()', function() {
             expect(err).to.exist()
             expect(loaded).to.not.exist()
 
-            seneca.act({ plugin: 'vcache', cmd: 'stats' }, function(
+            seneca.act({ plugin: 'entity-cache', cmd: 'stats' }, function(
               err,
               stats
             ) {
@@ -862,7 +862,7 @@ describe('remove()', function() {
       .quiet()
     seneca.use('entity')
     seneca.use('./broken') //, { disable: { set: true } })
-    seneca.use(VCache)
+    seneca.use(EntityCache)
 
     var type = internals.type()
 
@@ -873,7 +873,7 @@ describe('remove()', function() {
       seneca.make(type, { id: 'none' }).remove$(function(err) {
         expect(err).to.exist()
 
-        seneca.act({ plugin: 'vcache', cmd: 'stats' }, function(err, stats) {
+        seneca.act({ plugin: 'entity-cache', cmd: 'stats' }, function(err, stats) {
           expect(stats).to.contain({
             set: 0,
             get: 0,
@@ -941,7 +941,7 @@ describe('registerHandlers()', function() {
       var outside = seneca.make('foo', { a: 4 })
       outside.save$(function(err, outsideSaved) {
         expect(err).to.not.exist()
-        seneca.act({ plugin: 'vcache', cmd: 'stats' }, function(err, stats) {
+        seneca.act({ plugin: 'entity-cache', cmd: 'stats' }, function(err, stats) {
           expect(stats).to.contain({
             set: 1,
             get: 0,
@@ -979,7 +979,7 @@ describe('registerHandlers()', function() {
       var outside = seneca.make('foo', { a: 4 })
       outside.save$(function(err, outsideSaved) {
         expect(err).to.not.exist()
-        seneca.act({ plugin: 'vcache', cmd: 'stats' }, function(err, stats) {
+        seneca.act({ plugin: 'entity-cache', cmd: 'stats' }, function(err, stats) {
           expect(stats).to.contain({
             set: 1,
             get: 0,

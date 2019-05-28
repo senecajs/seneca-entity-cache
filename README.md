@@ -65,6 +65,35 @@ The unit tests require a running memcached and redis.
 Returns a JSON object containing the current hit/miss counts of the cache.
 
 
+<!--START:action-list-->
+
+
+## Action Patterns
+
+* [cmd:stats,plugin:vcache](#-cmdstatspluginvcache-)
+
+
+<!--END:action-list-->
+
+<!--START:action-desc-->
+
+
+## Action Descriptions
+
+### &laquo; `cmd:stats,plugin:vcache` &raquo;
+
+No description provided.
+
+
+
+----------
+
+
+<!--END:action-desc-->
+
+
+
+
 ### Options
 
 Here's how to set the options (the values shown are the defaults):
