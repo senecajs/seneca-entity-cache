@@ -1,5 +1,7 @@
 // Load modules
 
+var Assert = require('assert');
+
 var Crypto = require('crypto');
 var Hoek = require('hoek');
 var Items = require('items');
@@ -40,10 +42,10 @@ internals.scripts = {
 internals.seneca.ready(function () {
 
   internals.script(internals.scripts.load, function (err) {
-
+    Assert(null == err)
+    
     internals.seneca.act({ plugin: 'vcache', cmd: 'stats' }, function (err, stats) {
-
-      // console.log(stats);
+      Assert(null != stats)
       process.exit();
     });
   });
@@ -124,7 +126,7 @@ internals.save = function (value, callback) {
   internals.item(value).save$(function (err, saved) {
 
     if (err) {
-      return next(err);
+      return callback(err);
     }
 
     internals.stored.push(saved);

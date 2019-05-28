@@ -5,7 +5,7 @@
   "main": "vcache.js",
   "scripts": {
     "test": "npm run lab && SENECA_CACHE_PLUGIN=cache npm run lab && SENECA_CACHE_PLUGIN=redis-cache npm run lab",
-    "lab": "lab -P test -t 80 -I URL,URLSearchParams,igUint64Array,BigInt64Array,BigInt,BigUint64Array",
+    "lab": "lab -v -L -P test -t 80 -I URL,URLSearchParams,igUint64Array,BigInt64Array,BigInt,BigUint64Array",
     "prettier": "prettier --write --no-semi --single-quote *.js lib/*.js test/*.js",
     "coveralls": "lab -s -P test -r lcov | coveralls",
     "clean-npm": "rm -rf node_modules package-lock.json",
@@ -25,22 +25,26 @@
     "plugin"
   ],
   "author": "Richard Rodger (http://richardrodger.com)",
+  "contributors": [
+    "Eran Hammer (https://github.com/hueniverse)"
+  ],
   "license": "MIT",
   "dependencies": {
     "lru-cache": "^5.1.1",
     "underscore": "^1.6.0"
   },
   "devDependencies": {
-    "@seneca/cache": "^0.1.2",
-    "@seneca/redis-cache": "^0.1.0",
-    "@seneca/memcached-cache": "^1.1.0",
+    "@seneca/cache": "^0.1.3",
+    "@seneca/memcached-cache": "^1.1.1",
+    "@seneca/redis-cache": "^0.1.2",
     "code": "^5.2.4",
-    "hoek": "^6.1.2",
+    "hoek": "^6.1.3",
     "items": "^2.1.2",
     "lab": "^18.0.2",
-    "prettier": "^1.16.4",
+    "prettier": "^1.17.1",
     "seneca": "plugin",
-    "seneca-entity": "^2.5.1"
+    "seneca-entity": "^2.5.1",
+    "seneca-promisify": "^0.8.0"
   },
   "files": [
     "LICENSE.txt",

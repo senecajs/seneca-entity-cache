@@ -1,23 +1,22 @@
+/* Copyright © 2012-2019 Richard Rodger and other contributors, MIT License. */
 'use strict'
 
 var _ = require('underscore')
 var LRUCache = require('lru-cache')
 
-module.exports = function(options) {
-  var seneca = this
+module.exports = vcache
+module.exports.defaults = {
+  prefix: 'seneca-vcache',
+  maxhot: 1111,
+  expires: 3600 // 1 Hour
+}
 
-  var settings = seneca.util.deepextend(
-    {
-      prefix: 'seneca-vcache',
-      maxhot: 1111,
-      expires: 3600 // 1 Hour
-    },
-    options
-  )
+function vcache(options) {
+  var seneca = this
 
   // Setup in-memory cache
 
-  var cache = new LRUCache(settings.maxhot)
+  var lrucache = new LRUCache(options.maxhot)
 
   // Statistics
 
@@ -42,7 +41,7 @@ module.exports = function(options) {
   var versionKey = function(ent, id) {
     // Example: 'seneca-vcache~v~zen/moon/bar~171qa9'
 
-    var key = settings.prefix + '~v~' + ent.canon$({ string: true }) + '~' + id
+    var key = options.prefix + '~v~' + ent.canon$({ string: true }) + '~' + id
     return key
   }
 
@@ -50,7 +49,7 @@ module.exports = function(options) {
     // Example: 'seneca-vcache~d~0~zen/moon/bar~171qa9'
 
     var key =
-      settings.prefix +
+      options.prefix +
       '~d~' +
       version +
       '~' +
@@ -68,10 +67,10 @@ module.exports = function(options) {
     var item = {
       key: vkey,
       val: 0,
-      expires: settings.expires
+      expires: options.expires
     }
 
-    seneca.act({ role: 'cache', cmd: 'set' }, item, function(err, result) {
+    seneca.act({ role: 'cache', cmd: 'set' }, item, function(err) {
       if (err) {
         ++stats.cache_errs
         return reply(err)
@@ -86,10 +85,10 @@ module.exports = function(options) {
     var key = dataKey(ent, ent.id, version)
     seneca.log.debug('set', key)
 
-    cache.set(key, ent)
+    lrucache.set(key, ent)
     seneca.act(
       { role: 'cache', cmd: 'set' },
-      { key: key, val: ent.data$(), expires: settings.expires },
+      { key: key, val: ent.data$(), expires: options.expires },
       function(err, result) {
         var key = result && result.value
 
@@ -138,7 +137,7 @@ module.exports = function(options) {
               return reply(err)
             }
 
-            writeData(self, ent, 0, function(err, out) {
+            writeData(self, ent, 0, function(err) {
               reply(err || ent)
             })
           })
@@ -149,7 +148,7 @@ module.exports = function(options) {
         // Updated item
 
         ++stats.vinc
-        writeData(self, ent, version, function(err, out) {
+        writeData(self, ent, version, function(err) {
           reply(err || ent)
         })
       })
@@ -209,7 +208,7 @@ module.exports = function(options) {
               return reply(err)
             }
 
-            return writeData(self, ent, 0, function(err, version) {
+            return writeData(self, ent, 0, function(err) {
               return reply(err || ent)
             })
           })
@@ -220,16 +219,16 @@ module.exports = function(options) {
 
       ++stats.vhit
       var key = dataKey(qent, id, version)
-      var record = cache.get(key)
+      var record = lrucache.get(key)
       if (record) {
-        // Entry found (cache)
+        // Entry found (lrucache)
 
         self.log.debug('hit', 'lru', key)
         ++stats.lru_hit
         return reply(qent.make$(record))
       }
 
-      // Entry not found (evicted from cache)
+      // Entry not found (evicted from lrucache)
 
       self.log.debug('miss', 'lru', key)
       ++stats.lru_miss
@@ -249,7 +248,7 @@ module.exports = function(options) {
 
         if (ent) {
           ++stats.net_hit
-          cache.set(key, ent)
+          lrucache.set(key, ent)
           self.log.debug('hit', 'net', key)
           return reply(qent.make$(ent))
         }
@@ -269,7 +268,7 @@ module.exports = function(options) {
     var self = this
     var remove_prior = this.prior
 
-    remove_prior.call(self, msg, function(err, ent) {
+    remove_prior.call(self, msg, function(err, remove_ent) {
       if (err) {
         return reply(err)
       }
@@ -277,10 +276,8 @@ module.exports = function(options) {
       var vkey = versionKey(msg.qent, msg.q.id) // Only called with a valid entity id
       self.act(
         { role: 'cache', cmd: 'set' },
-        { key: vkey, val: -1, expires: settings.expires },
-        function(err, result) {
-          var ent = result && result.value
-
+        { key: vkey, val: -1, expires: options.expires },
+        function(err) {
           if (err) {
             ++stats.cache_errs
             return reply(err)
@@ -288,7 +285,7 @@ module.exports = function(options) {
 
           ++stats.drop
           self.log.debug('drop', vkey)
-          return reply(ent)
+          return reply(remove_ent)
         }
       )
     })
@@ -337,8 +334,8 @@ module.exports = function(options) {
     })
   }
 
-  if (settings.entities) {
-    _.each(settings.entities, function(entspec) {
+  if (options.entities) {
+    _.each(options.entities, function(entspec) {
       registerHandlers(
         _.isString(entspec) ? seneca.util.parsecanon(entspec) : entspec,
         { exact: true }
@@ -352,7 +349,7 @@ module.exports = function(options) {
 
   seneca.add({ plugin: 'vcache', cmd: 'stats' }, function(msg, next) {
     var result = _.clone(stats)
-    result.hotsize = cache.keys().length
+    result.hotsize = lrucache.keys().length
     result.end = Date.now()
     this.log.debug('stats', result)
     return next(null, result)

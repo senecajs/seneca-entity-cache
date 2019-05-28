@@ -1,3 +1,7 @@
+/* Copyright © 2012-2019 Richard Rodger and other contributors, MIT License. */
+
+// NOTE: runs multiple times (via package.json script) to test multiple cache servers
+
 // Load modules
 
 var SENECA_CACHE_PLUGIN = process.env.SENECA_CACHE_PLUGIN || 'memcached-cache'
@@ -8,7 +12,7 @@ var Crypto = require('crypto')
 var Code = require('code')
 var Lab = require('lab')
 var Seneca = require('seneca')
-var Vcache = require('..')
+var VCache = require('..')
 
 // Declare internals
 
@@ -21,7 +25,35 @@ var describe = lab.describe
 var it = make_it(lab)
 var expect = Code.expect
 
-process.setMaxListeners(0) // Remove warning caused by creating multiple framework instances
+lab.it('does not damage entities placed into LRUCache', async function() {
+  var seneca = await seneca_instance().ready()
+
+  var id = seneca.util.Nid()
+
+  var qaz0 = await seneca
+    .entity('qaz')
+    .data$({ id$: id, a: 1, b: 2 })
+    .save$()
+  qaz0.c = 3
+
+  var qaz0a1 = await seneca.entity('qaz').load$(id)
+  qaz0a1.d = 4
+
+  var qaz0a2 = await seneca.entity('qaz').load$(id)
+  qaz0a2.e = 5
+
+  var qaz0as = await qaz0a2.save$()
+
+  //console.log(qaz0)
+  //console.log(qaz0a1)
+  //console.log(qaz0a2)
+  //console.log(qaz0as)
+
+  expect(qaz0.data$(false)).equals({ id: id, a: 1, b: 2, c: 3 })
+  expect(qaz0a1.data$(false)).equals({ id: id, a: 1, b: 2, d: 4 })
+  expect(qaz0a2.data$(false)).equals({ id: id, a: 1, b: 2, e: 5 })
+  expect(qaz0as.data$(false)).equals({ id: id, a: 1, b: 2, e: 5 })
+})
 
 it('writes then reads a record', function(done) {
   var seneca = seneca_instance()
@@ -78,7 +110,7 @@ it('writes then reads a record', function(done) {
 
             // Remove
 
-            loaded.remove$(function(err, out) {
+            loaded.remove$(function(err) {
               expect(err).to.not.exist()
               seneca.act({ plugin: 'vcache', cmd: 'stats' }, function(
                 err,
@@ -188,7 +220,7 @@ it('updates a record', function(done) {
 
                 // Remove
 
-                loaded.remove$(function(err, out) {
+                loaded.remove$(function(err) {
                   expect(err).to.not.exist()
                   seneca.act({ plugin: 'vcache', cmd: 'stats' }, function(
                     err,
@@ -221,10 +253,12 @@ it('updates a record', function(done) {
 
 describe('save()', function() {
   it('handles errors in upstream cache (incr)', function(done) {
-    var seneca = Seneca().test()
+    var seneca = Seneca()
+      .test()
+      .quiet()
     seneca.use('entity')
     seneca.use('./broken')
-    seneca.use('..')
+    seneca.use(VCache)
 
     seneca.ready(function() {
       var control = this.export(SENECA_CACHE_PLUGIN + '/control')
@@ -237,6 +271,7 @@ describe('save()', function() {
 
       entry.save$(function(err, saved) {
         expect(err).to.exist()
+        expect(saved).not.exist()
 
         seneca.act({ plugin: 'vcache', cmd: 'stats' }, function(err, stats) {
           expect(stats).to.contain({
@@ -262,7 +297,9 @@ describe('save()', function() {
   })
 
   it('handles errors lower priority entity service', function(done) {
-    var seneca = Seneca().test()
+    var seneca = Seneca()
+      .test()
+      .quiet()
     seneca.use('entity')
     seneca.use(SENECA_CACHE_PLUGIN)
 
@@ -274,7 +311,7 @@ describe('save()', function() {
         return callback(new Error('Bad entity service'))
       })
 
-      seneca.use('..')
+      seneca.use(VCache)
 
       seneca.ready(function() {
         var type = internals.type()
@@ -284,6 +321,7 @@ describe('save()', function() {
 
         entry.save$(function(err, saved) {
           expect(err).to.exist()
+          expect(saved).not.exist()
           done()
         })
       })
@@ -291,12 +329,13 @@ describe('save()', function() {
   })
 
   it('handles upstream error when updating a record (writeData) - qqq', function(done) {
-    var seneca = Seneca().test()
-    //.quiet()
+    var seneca = Seneca()
+      .test()
+      .quiet()
     seneca.use('entity')
 
     seneca.use('./broken')
-    seneca.use('..')
+    seneca.use(VCache)
 
     seneca.ready(function() {
       var control = this.export(SENECA_CACHE_PLUGIN + '/control')
@@ -307,7 +346,7 @@ describe('save()', function() {
       // Save
 
       entry.save$(function(err, saved) {
-        var id = saved.id
+        expect(saved).to.exist()
         saved.b = 5
 
         // Update
@@ -316,12 +355,13 @@ describe('save()', function() {
 
         saved.save$(function(err, modified) {
           expect(err).to.exist()
+          expect(modified).not.exist()
 
           // Remove
 
           control.set = false
 
-          saved.remove$(function(err, out) {
+          saved.remove$(function(err) {
             expect(err).to.not.exist()
             seneca.act({ plugin: 'vcache', cmd: 'stats' }, function(
               err,
@@ -361,13 +401,14 @@ describe('load()', function() {
       // Save
 
       entry.save$(function(err, saved) {
+        expect(saved).to.exist()
         expect(err).to.not.exist()
 
         seneca.make(type).load$({ a: 1 }, function(err, loaded) {
           expect(err).to.not.exist()
           expect(loaded).to.exist()
 
-          saved.remove$(function(err, out) {
+          saved.remove$(function(err) {
             expect(err).to.not.exist()
             done()
           })
@@ -386,13 +427,14 @@ describe('load()', function() {
       // Save
 
       entry.save$(function(err, saved) {
+        expect(saved).to.exist()
         expect(err).to.not.exist()
 
         seneca.make(type).load$({ id: saved.id, a: 1 }, function(err, loaded) {
           expect(err).to.not.exist()
           expect(loaded).to.exist()
 
-          saved.remove$(function(err, out) {
+          saved.remove$(function(err) {
             expect(err).to.not.exist()
             done()
           })
@@ -411,13 +453,14 @@ describe('load()', function() {
       // Save
 
       entry.save$(function(err, saved) {
+        expect(saved).to.exist()
         expect(err).to.not.exist()
 
         seneca.make(type).load$(123, function(err, loaded) {
           expect(err).to.not.exist()
-          // expect(loaded).to.not.exist();
+          expect(loaded).to.not.exist()
 
-          saved.remove$(function(err, out) {
+          saved.remove$(function(err) {
             expect(err).to.not.exist()
             done()
           })
@@ -430,7 +473,6 @@ describe('load()', function() {
     var seneca = seneca_instance()
 
     var type = internals.type()
-    var entry = seneca.make(type)
 
     seneca.make(type).load$('unknown', function(err, loaded) {
       expect(err).to.not.exist()
@@ -468,6 +510,7 @@ describe('load()', function() {
       // Save
 
       entry.save$(function(err, saved) {
+        expect(saved).to.exist()
         expect(err).to.not.exist()
         expect(saved.a).to.equal(entry.a)
 
@@ -499,7 +542,7 @@ describe('load()', function() {
 
             // Remove
 
-            loaded.remove$(function(err, out) {
+            loaded.remove$(function(err) {
               expect(err).to.not.exist()
               done()
             })
@@ -557,10 +600,10 @@ describe('load()', function() {
 
               // Remove
 
-              saved1.remove$(function(err, out) {
+              saved1.remove$(function(err) {
                 expect(err).to.not.exist()
 
-                saved2.remove$(function(err, out) {
+                saved2.remove$(function(err) {
                   expect(err).to.not.exist()
                   done()
                 })
@@ -599,6 +642,7 @@ describe('load()', function() {
               '~' +
               saved1.id,
             function(err, result) {
+              expect(result).to.exist()
               expect(err).to.not.exist()
 
               // Load
@@ -629,10 +673,10 @@ describe('load()', function() {
 
                   // Remove
 
-                  saved1.remove$(function(err, out) {
+                  saved1.remove$(function(err) {
                     expect(err).to.not.exist()
 
-                    saved2.remove$(function(err, out) {
+                    saved2.remove$(function(err) {
                       expect(err).to.not.exist()
                       done()
                     })
@@ -652,10 +696,9 @@ describe('load()', function() {
       .quiet()
     seneca.use('entity')
     seneca.use('./broken') //, { disable: { get: true } });
-    seneca.use('..')
+    seneca.use(VCache)
 
     var type = internals.type()
-    var entry = seneca.make(type)
 
     seneca.ready(function() {
       var control = this.export(SENECA_CACHE_PLUGIN + '/control')
@@ -689,7 +732,7 @@ describe('load()', function() {
   })
 
   it('passes lower priority load error', function(done) {
-    var seneca = seneca_instance()
+    var seneca = seneca_instance().quiet()
 
     seneca.ready(function() {
       seneca.add({ role: 'entity', cmd: 'load' }, function(ignore, callback) {
@@ -697,7 +740,6 @@ describe('load()', function() {
       })
 
       var type = internals.type()
-      var entry = seneca.make(type)
 
       seneca.make(type).load$('unknown', function(err, loaded) {
         expect(err).to.exist()
@@ -708,7 +750,9 @@ describe('load()', function() {
   })
 
   it('handles upstream cache get error after value evicted from lru cache', function(done) {
-    var seneca = Seneca().test()
+    var seneca = Seneca()
+      .test()
+      .quiet()
     seneca.use('entity')
 
     //var disable = { get: false }
@@ -766,10 +810,10 @@ describe('load()', function() {
 
               // Remove
 
-              saved1.remove$(function(err, out) {
+              saved1.remove$(function(err) {
                 expect(err).to.not.exist()
 
-                saved2.remove$(function(err, out) {
+                saved2.remove$(function(err) {
                   expect(err).to.not.exist()
                   done()
                 })
@@ -784,10 +828,9 @@ describe('load()', function() {
 
 describe('remove()', function() {
   it('passes lower priority remove error', function(done) {
-    var seneca = seneca_instance()
+    var seneca = seneca_instance().quiet()
 
     var type = internals.type()
-    var entry = seneca.make(type)
 
     seneca.ready(function() {
       seneca.add({ role: 'entity', cmd: 'remove' }, function(ignore, callback) {
@@ -814,13 +857,14 @@ describe('remove()', function() {
   })
 
   it('errors on upstream set error', function(done) {
-    var seneca = Seneca().test()
+    var seneca = Seneca()
+      .test()
+      .quiet()
     seneca.use('entity')
     seneca.use('./broken') //, { disable: { set: true } })
-    seneca.use('..')
+    seneca.use(VCache)
 
     var type = internals.type()
-    var entry = seneca.make(type)
 
     seneca.ready(function() {
       var control = this.export(SENECA_CACHE_PLUGIN + '/control')
@@ -859,12 +903,13 @@ describe('list()', function() {
 
     var entry = seneca.make('foo', { a: 4 })
     entry.save$(function(err, saved) {
+      expect(saved).to.exist()
       expect(err).to.not.exist()
       entry.list$(function(err, list) {
         expect(err).to.not.exist()
         expect(list.length).to.equal(1)
 
-        saved.remove$(function(err, out) {
+        saved.remove$(function(err) {
           expect(err).to.not.exist()
           done()
         })
@@ -892,6 +937,7 @@ describe('registerHandlers()', function() {
 
     var entry = seneca.make('test', 'foo', { a: 4 })
     entry.save$(function(err, saved) {
+      expect(saved).to.exist()
       var outside = seneca.make('foo', { a: 4 })
       outside.save$(function(err, outsideSaved) {
         expect(err).to.not.exist()
@@ -912,9 +958,9 @@ describe('registerHandlers()', function() {
             hotsize: 1
           })
 
-          saved.remove$(function(err, out) {
+          saved.remove$(function(err) {
             expect(err).to.not.exist()
-            outsideSaved.remove$(function(err, out) {
+            outsideSaved.remove$(function(err) {
               expect(err).to.not.exist()
               done()
             })
@@ -929,6 +975,7 @@ describe('registerHandlers()', function() {
 
     var entry = seneca.make('test', 'foo', { a: 4 })
     entry.save$(function(err, saved) {
+      expect(saved).to.exist()
       var outside = seneca.make('foo', { a: 4 })
       outside.save$(function(err, outsideSaved) {
         expect(err).to.not.exist()
@@ -949,9 +996,9 @@ describe('registerHandlers()', function() {
             hotsize: 1
           })
 
-          saved.remove$(function(err, out) {
+          saved.remove$(function(err) {
             expect(err).to.not.exist()
-            outsideSaved.remove$(function(err, out) {
+            outsideSaved.remove$(function(err) {
               expect(err).to.not.exist()
               done()
             })
@@ -985,7 +1032,7 @@ function make_it(lab) {
 
 function seneca_instance(opts) {
   var seneca = Seneca().test()
-  //.quiet()
+  seneca.use('promisify')
   seneca.use('entity')
   seneca.use(SENECA_CACHE_PLUGIN)
   seneca.use('..', opts)
