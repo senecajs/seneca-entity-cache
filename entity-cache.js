@@ -15,7 +15,7 @@ function entity_cache(options) {
 
   // Setup in-memory cache
 
-  var lrucache = new LRUCache(options.maxhot)
+  var hotcache = new LRUCache(options.maxhot)
 
   // Statistics
 
@@ -27,16 +27,17 @@ function entity_cache(options) {
     vadd: 0,
     vmiss: 0,
     vhit: 0,
-    lru_hit: 0,
+    hot_hit: 0,
     net_hit: 0,
-    lru_miss: 0,
+    hot_miss: 0,
     net_miss: 0,
     drop: 0,
     cache_errs: 0
   }
 
 
-  seneca.add('plugin:entity-cache,cmd:stats', cmd_stats)
+  seneca.add('plugin:entity-cache,get:stats', get_stats)
+  seneca.add('plugin:entity-cache,list:hot-keys', list_hot_keys)
 
   
   // Keys
@@ -69,7 +70,7 @@ function entity_cache(options) {
 
     var item = {
       key: vkey,
-      val: 0,
+      val: 1,
       expires: options.expires
     }
 
@@ -88,7 +89,7 @@ function entity_cache(options) {
     var key = dataKey(ent, ent.id, version)
     seneca.log.debug('set', key)
 
-    lrucache.set(key, ent.data$())
+    hotcache.set(key, ent.data$())
     seneca.act(
       { role: 'cache', cmd: 'set' },
       { key: key, val: ent.data$(), expires: options.expires },
@@ -127,6 +128,8 @@ function entity_cache(options) {
       ) {
         var version = result && result.value
 
+        // console.log('RESULT', vkey, result)
+        
         if (err) {
           ++stats.cache_errs
           return reply(err)
@@ -140,7 +143,7 @@ function entity_cache(options) {
               return reply(err)
             }
 
-            writeData(self, ent, 0, function(err) {
+            writeData(self, ent, 1, function(err) {
               reply(err || ent)
             })
           })
@@ -222,19 +225,19 @@ function entity_cache(options) {
 
       ++stats.vhit
       var key = dataKey(qent, id, version)
-      var record = lrucache.get(key)
+      var record = hotcache.get(key)
       if (record) {
-        // Entry found (lrucache)
+        // Entry found (hotcache)
 
-        self.log.debug('hit', 'lru', key)
-        ++stats.lru_hit
+        self.log.debug('hit', 'hot', key)
+        ++stats.hot_hit
         return reply(qent.make$(record))
       }
 
-      // Entry not found (evicted from lrucache)
+      // Entry not found (evicted from hotcache)
 
-      self.log.debug('miss', 'lru', key)
-      ++stats.lru_miss
+      self.log.debug('miss', 'hot', key)
+      ++stats.hot_miss
 
       self.act({ role: 'cache', cmd: 'get' }, { key: key }, function(
         err,
@@ -251,7 +254,7 @@ function entity_cache(options) {
 
         if (ent_data) {
           ++stats.net_hit
-          lrucache.set(key, ent_data)
+          hotcache.set(key, ent_data)
           self.log.debug('hit', 'net', key)
           return reply(qent.make$(ent_data))
         }
@@ -353,13 +356,18 @@ function entity_cache(options) {
   // Register cache statistics action
 
 
-  function cmd_stats(msg, reply) {
+  function get_stats(msg, reply) {
     var result = {...stats}
-    result.hotsize = lrucache.keys().length
+    result.hotsize = hotcache.length
     result.end = Date.now()
     this.log.debug('stats', result)
     return reply(result)
   }
 
+  function list_hot_keys(msg, reply) {
+    reply({keys:hotcache.keys()})
+  }
+
+  
   return { name: 'vcache' }
 }
