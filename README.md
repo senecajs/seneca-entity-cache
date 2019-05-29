@@ -1,4 +1,11 @@
-# seneca-vcache
+# @seneca/entity-cache
+
+[Seneca](http://senecajs.org) plugin providing simple id-based distributed entity caching.
+
+[![Npm][BadgeNpm]][Npm]
+[![Travis][BadgeTravis]][Travis]
+[![Coveralls][BadgeCoveralls]][Coveralls]
+
 
 ### Node.js Seneca Versioned Caching module
 
@@ -16,13 +23,6 @@ This plays nicely with multiple memcached instances, and allows Seneca apps to s
 (See <a href="http://www.amazon.com/Beginning-Mobile-Application-Development-Cloud/dp/1118034694">chapter 8 of my book for details</a>, or read <i><a href="http://37signals.com/svn/posts/3113-how-key-based-cache-expiration-works">How key-based cache expiration works</a></i>)
 
 
-### Support
-
-If you're using this module, feel free to contact me on twitter if you
-have any questions! :) [@rjrodger](http://twitter.com/rjrodger)
-
-[![Build Status](https://travis-ci.org/rjrodger/seneca-vcache.png?branch=master)](https://travis-ci.org/rjrodger/seneca-vcache)
-
 
 
 ### Quick example
@@ -32,7 +32,7 @@ This module works by wrapping the data entity actions (<i>role:entity, cmd:save,
 ```JavaScript
 var seneca = require('seneca')()
 seneca.use('memcached-cache')
-seneca.use('vcache')
+seneca.use('entity-cache')
 ```
 
 Then just use data entities as normal. Except things will be a lot faster.
@@ -43,7 +43,7 @@ Then just use data entities as normal. Except things will be a lot faster.
 ```sh
 npm install seneca
 npm install seneca-memcached-cache
-npm install seneca-vcache
+npm install @seneca/entity-cache
 ```
 
 You'll need the <a href="https://github.com/darsee/seneca-memcached-cache">seneca-memcached-cache</a> plugin as a dependency.
@@ -60,7 +60,7 @@ The unit tests require a running memcached and redis.
 
 ## Actions
 
-### _plugin:vcache, cmd:stats_
+### _plugin:entity-cache, cmd:stats_
 
 Returns a JSON object containing the current hit/miss counts of the cache.
 
@@ -70,7 +70,7 @@ Returns a JSON object containing the current hit/miss counts of the cache.
 
 ## Action Patterns
 
-* [cmd:stats,plugin:vcache](#-cmdstatspluginvcache-)
+* [cmd:stats,plugin:entity-cache](#-cmdstatspluginentity-cache-)
 
 
 <!--END:action-list-->
@@ -80,7 +80,7 @@ Returns a JSON object containing the current hit/miss counts of the cache.
 
 ## Action Descriptions
 
-### &laquo; `cmd:stats,plugin:vcache` &raquo;
+### &laquo; `cmd:stats,plugin:entity-cache` &raquo;
 
 No description provided.
 
@@ -99,8 +99,8 @@ No description provided.
 Here's how to set the options (the values shown are the defaults):
 
 ```JavaScript
-seneca.use('vcache',{
-  prefix:  'seneca-vcache',
+seneca.use('entity-cache',{
+  prefix:  '@seneca/entity-cache',
   maxhot:  1111,
   expires: 3600
 })
@@ -129,3 +129,11 @@ mongod --dbpath=db
 node n1.js --seneca.log=type:plugin
 node n2.js --seneca.log=type:plugin
 ```
+
+
+[BadgeCoveralls]: https://coveralls.io/repos/voxgig/seneca-entity-cache/badge.svg?branch=master&service=github
+[BadgeNpm]: https://badge.fury.io/js/seneca-entity-cache.svg
+[BadgeTravis]: https://travis-ci.org/voxgig/seneca-entity-cache.svg?branch=master
+[Coveralls]: https://coveralls.io/github/voxgig/seneca-entity-cache?branch=master
+[Npm]: https://www.npmjs.com/package/seneca-entity-cache
+[Travis]: https://travis-ci.org/voxgig/seneca-entity-cache?branch=master

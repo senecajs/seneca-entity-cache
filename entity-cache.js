@@ -15,6 +15,8 @@ function entity_cache(options) {
 
   // Setup in-memory cache
 
+  // NOTE: never used for versionKeys - these must always sync against
+  // remote cache
   var hotcache = new LRUCache(options.maxhot)
 
   // Statistics
@@ -35,11 +37,9 @@ function entity_cache(options) {
     cache_errs: 0
   }
 
-
   seneca.add('plugin:entity-cache,get:stats', get_stats)
   seneca.add('plugin:entity-cache,list:hot-keys', list_hot_keys)
 
-  
   // Keys
 
   var versionKey = function(ent, id) {
@@ -129,7 +129,7 @@ function entity_cache(options) {
         var version = result && result.value
 
         // console.log('RESULT', vkey, result)
-        
+
         if (err) {
           ++stats.cache_errs
           return reply(err)
@@ -308,15 +308,15 @@ function entity_cache(options) {
     return list_prior.call(self, msg, reply)
   }
   */
-  
+
   // Register cache interface
 
   var registerHandlers = function(msg, flags) {
     if (flags.exact) {
-      seneca.add({...msg, role: 'entity', cmd: 'save' }, save_action)
-      seneca.add({...msg, role: 'entity', cmd: 'load' }, load_action)
+      seneca.add({ ...msg, role: 'entity', cmd: 'save' }, save_action)
+      seneca.add({ ...msg, role: 'entity', cmd: 'load' }, load_action)
       // seneca.add({...msg, role: 'entity', cmd: 'list' }, list)
-      seneca.add({...msg, role: 'entity', cmd: 'remove' }, remove_action)
+      seneca.add({ ...msg, role: 'entity', cmd: 'remove' }, remove_action)
       return
     }
 
@@ -345,7 +345,7 @@ function entity_cache(options) {
   if (options.entities) {
     options.entities.forEach(function(entspec) {
       registerHandlers(
-        'string' === typeof(entspec) ? seneca.util.parsecanon(entspec) : entspec,
+        'string' === typeof entspec ? seneca.util.parsecanon(entspec) : entspec,
         { exact: true }
       )
     })
@@ -355,9 +355,8 @@ function entity_cache(options) {
 
   // Register cache statistics action
 
-
   function get_stats(msg, reply) {
-    var result = {...stats}
+    var result = { ...stats }
     result.hotsize = hotcache.length
     result.end = Date.now()
     this.log.debug('stats', result)
@@ -365,9 +364,8 @@ function entity_cache(options) {
   }
 
   function list_hot_keys(msg, reply) {
-    reply({keys:hotcache.keys()})
+    reply({ keys: hotcache.keys() })
   }
 
-  
   return { name: 'vcache' }
 }

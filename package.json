@@ -1,6 +1,6 @@
 {
   "name": "@seneca/entity-cache",
-  "version": "0.6.0",
+  "version": "0.0.1",
   "description": "Versioned caching plugin for seneca",
   "main": "entity-cache.js",
   "scripts": {
