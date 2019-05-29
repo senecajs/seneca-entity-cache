@@ -1,6 +1,6 @@
 {
   "name": "@seneca/entity-cache",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Versioned caching plugin for seneca",
   "main": "entity-cache.js",
   "scripts": {
@@ -27,6 +27,7 @@
   ],
   "author": "Richard Rodger (http://richardrodger.com)",
   "contributors": [
+    "Georgi Griffiths (https://github.com/georgigriffiths)",
     "Eran Hammer (https://github.com/hueniverse)"
   ],
   "license": "MIT",
