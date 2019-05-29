@@ -214,7 +214,7 @@ function entity_cache(options) {
               return reply(err)
             }
 
-            return writeData(self, ent, 0, function(err) {
+            return writeData(self, ent, 1, function(err) {
               return reply(err || ent)
             })
           })
