@@ -9,7 +9,7 @@ module.exports.defaults = {
   maxhot: 1111,
   maxage: 22222,
   expires: 3600, // 1 Hour
-  hot: true, // hot cache active
+  hot: true // hot cache active
 }
 
 function entity_cache(options) {
@@ -19,10 +19,12 @@ function entity_cache(options) {
 
   // NOTE: never used for versionKeys - these must always sync against
   // remote cache
-  var hotcache = options.hot && new LRUCache({
-    max: options.maxhot,
-    maxAge: options.maxage // always expire ents - weak eventual consistency
-  })
+  var hotcache =
+    options.hot &&
+    new LRUCache({
+      max: options.maxhot,
+      maxAge: options.maxage // always expire ents - weak eventual consistency
+    })
 
   // Statistics
 
@@ -46,7 +48,6 @@ function entity_cache(options) {
     .add('plugin:entity-cache,get:stats', get_stats)
     .add('plugin:entity-cache,list:hot-keys', list_hot_keys)
     .add('plugin:entity-cache,clear:hot-keys', clear_hot_keys)
-
 
   // Cache write
 
@@ -369,7 +370,6 @@ function entity_cache(options) {
   return { name: 'entity-cache' }
 }
 
-
 const intern = (entity_cache.intern = {
   make_version_key: function(ent, id, prefix) {
     // Example: 'SE~v~zen/moon/bar~171qa9'
@@ -381,15 +381,7 @@ const intern = (entity_cache.intern = {
   make_data_key: function(ent, id, version, prefix) {
     // Example: 'SE~d~0~zen/moon/bar~171qa9'
 
-    var key =
-        prefix +
-        '~d~' +
-        version +
-        '~' +
-        ent.entity$ +
-        '~' +
-        id
+    var key = prefix + '~d~' + version + '~' + ent.entity$ + '~' + id
     return key
   }
-
 })

@@ -28,8 +28,7 @@ var it = make_it(lab)
 var expect = Code.expect
 
 lab.it('does not damage entities placed into LRUCache', async function() {
-  var seneca = await seneca_instance()
-      .ready()
+  var seneca = await seneca_instance().ready()
 
   var id = seneca.util.Nid()
 
@@ -91,29 +90,23 @@ lab.it('does not damage entities placed into LRUCache', async function() {
   var qaz0c = await seneca.entity('qaz').load$(id)
   expect(qaz0c.data$(false)).equals({ id: id, a: 1, b: 2, e: 5 })
 
-  
   var memdata = await seneca.post('role:mem-store,cmd:dump')
-  var qaz1md = {...memdata[void 0].qaz[id]}
+  var qaz1md = { ...memdata[void 0].qaz[id] }
   qaz1md.id = seneca.util.Nid()
   qaz1md.a = 2
   memdata[void 0].qaz[qaz1md.id] = qaz1md
 
-
   //memdata = await seneca.post('role:mem-store,cmd:dump')
   //console.dir(memdata,{depth:null})
-  
+
   var qaz1 = await seneca.entity('qaz').load$(qaz1md.id)
   expect(qaz1.data$(false)).equals({ id: qaz1md.id, a: 2, b: 2, e: 5 })
 
   hot_keys = await seneca.post('plugin:entity-cache,list:hot-keys')
 
   expect(hot_keys).equal({
-    keys: [
-      'SE~d~1~-/-/qaz~'+qaz1md.id,
-      'SE~d~2~-/-/qaz~'+id
-    ]
+    keys: ['SE~d~1~-/-/qaz~' + qaz1md.id, 'SE~d~2~-/-/qaz~' + id]
   })
-
 })
 
 it('writes then reads a record', function(done) {
@@ -209,9 +202,8 @@ it('writes then reads a record', function(done) {
   })
 })
 
-
 it('writes then reads a record with no hotcache', function(done) {
-  var seneca = seneca_instance({hot: false})
+  var seneca = seneca_instance({ hot: false })
 
   seneca.ready(function() {
     var type = internals.type()
@@ -302,7 +294,6 @@ it('writes then reads a record with no hotcache', function(done) {
     })
   })
 })
-
 
 it('updates a record', function(done) {
   var seneca = seneca_instance()
@@ -814,10 +805,7 @@ describe('load()', function() {
           // Drop from upstream cache
 
           seneca.act(
-            'role:cache, cmd:delete, key:SE~d~1~-/-/' +
-              type +
-              '~' +
-              saved1.id,
+            'role:cache, cmd:delete, key:SE~d~1~-/-/' + type + '~' + saved1.id,
             function(err, result) {
               expect(result).to.exist()
               expect(err).to.not.exist()
