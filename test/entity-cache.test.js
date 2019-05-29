@@ -695,14 +695,15 @@ describe('load()', function() {
 
               seneca.make(type).load$(saved1.id, function(err, loaded) {
                 expect(err).to.not.exist()
-                expect(loaded).to.be.null()
+                expect(loaded.a).to.equal(entry.a)
+                expect(loaded.id).to.equal(saved1.id)
 
                 seneca.act({ plugin: 'entity-cache', get: 'stats' }, function(
                   err,
                   stats
                 ) {
                   expect(stats).to.contain({
-                    set: 2,
+                    set: 3,
                     get: 1,
                     vinc: 0,
                     vadd: 2,
