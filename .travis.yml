@@ -1,4 +1,8 @@
 language: node_js
+sudo: false
+
+env:
+  - SENECA_VER=senecajs/seneca
 
 node_js:
   - "11"
@@ -8,4 +12,11 @@ node_js:
 services:
   - memcached
   - redis-server
+
+before_script:
+  - npm uninstall seneca
+  - npm install $SENECA_VER
+
+after_script:
+  - npm run coveralls
 
