@@ -1,6 +1,6 @@
 {
   "name": "@seneca/entity-cache",
-  "version": "0.0.1",
+  "version": "0.1.0",
   "description": "Versioned caching plugin for seneca",
   "main": "entity-cache.js",
   "scripts": {
@@ -15,11 +15,11 @@
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/rjrodger/seneca-vcache.git"
+    "url": "https://github.com/senecajs/seneca-entity-cache.git"
   },
   "keywords": [
     "seneca",
-    "vcache",
+    "entity",
     "version",
     "cache",
     "memcached",
@@ -49,6 +49,6 @@
   "files": [
     "LICENSE.txt",
     "README.md",
-    "vcache.js"
+    "entity-cache.js"
   ]
 }
