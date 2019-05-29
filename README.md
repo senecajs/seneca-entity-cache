@@ -131,9 +131,9 @@ node n2.js --seneca.log=type:plugin
 ```
 
 
-[BadgeCoveralls]: https://coveralls.io/repos/voxgig/seneca-entity-cache/badge.svg?branch=master&service=github
-[BadgeNpm]: https://badge.fury.io/js/seneca-entity-cache.svg
-[BadgeTravis]: https://travis-ci.org/voxgig/seneca-entity-cache.svg?branch=master
-[Coveralls]: https://coveralls.io/github/voxgig/seneca-entity-cache?branch=master
+[BadgeCoveralls]: https://coveralls.io/repos/senecajs/seneca-entity-cache/badge.svg?branch=master&service=github
+[BadgeNpm]: https://badge.fury.io/js/%40seneca%2Fentity-cache.svg
+[BadgeTravis]: https://travis-ci.org/senecajs/seneca-entity-cache.svg?branch=master
+[Coveralls]: https://coveralls.io/github/senecajs/seneca-entity-cache?branch=master
 [Npm]: https://www.npmjs.com/package/seneca-entity-cache
-[Travis]: https://travis-ci.org/voxgig/seneca-entity-cache?branch=master
+[Travis]: https://travis-ci.org/senecajs/seneca-entity-cache?branch=master
