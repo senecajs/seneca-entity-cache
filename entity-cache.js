@@ -5,9 +5,11 @@ var LRUCache = require('lru-cache')
 
 module.exports = entity_cache
 module.exports.defaults = {
-  prefix: 'seneca-entity',
+  prefix: 'SE',
   maxhot: 1111,
-  expires: 3600 // 1 Hour
+  maxage: 22222,
+  expires: 3600, // 1 Hour
+  hot: true, // hot cache active
 }
 
 function entity_cache(options) {
@@ -17,7 +19,10 @@ function entity_cache(options) {
 
   // NOTE: never used for versionKeys - these must always sync against
   // remote cache
-  var hotcache = new LRUCache(options.maxhot)
+  var hotcache = options.hot && new LRUCache({
+    max: options.maxhot,
+    maxAge: options.maxage // always expire ents - weak eventual consistency
+  })
 
   // Statistics
 
@@ -37,31 +42,11 @@ function entity_cache(options) {
     cache_errs: 0
   }
 
-  seneca.add('plugin:entity-cache,get:stats', get_stats)
-  seneca.add('plugin:entity-cache,list:hot-keys', list_hot_keys)
+  seneca
+    .add('plugin:entity-cache,get:stats', get_stats)
+    .add('plugin:entity-cache,list:hot-keys', list_hot_keys)
+    .add('plugin:entity-cache,clear:hot-keys', clear_hot_keys)
 
-  // Keys
-
-  var versionKey = function(ent, id) {
-    // Example: 'seneca-vcache~v~zen/moon/bar~171qa9'
-
-    var key = options.prefix + '~v~' + ent.canon$({ string: true }) + '~' + id
-    return key
-  }
-
-  var dataKey = function(ent, id, version) {
-    // Example: 'seneca-vcache~d~0~zen/moon/bar~171qa9'
-
-    var key =
-      options.prefix +
-      '~d~' +
-      version +
-      '~' +
-      ent.canon$({ string: true }) +
-      '~' +
-      id
-    return key
-  }
 
   // Cache write
 
@@ -86,10 +71,10 @@ function entity_cache(options) {
   }
 
   var writeData = function(seneca, ent, version, reply) {
-    var key = dataKey(ent, ent.id, version)
+    var key = intern.make_data_key(ent, ent.id, version, options.prefix)
     seneca.log.debug('set', key)
 
-    hotcache.set(key, ent.data$())
+    hotcache && hotcache.set(key, ent.data$())
     seneca.act(
       { role: 'cache', cmd: 'set' },
       { key: key, val: ent.data$(), expires: options.expires },
@@ -120,7 +105,7 @@ function entity_cache(options) {
 
       // Generate version key
 
-      var vkey = versionKey(ent, ent.id)
+      var vkey = intern.make_version_key(ent, ent.id, options.prefix)
 
       self.act({ role: 'cache', cmd: 'incr' }, { key: vkey, val: 1 }, function(
         err,
@@ -178,7 +163,7 @@ function entity_cache(options) {
 
     // Lookup version key
 
-    var vkey = versionKey(qent, id)
+    var vkey = intern.make_version_key(qent, id, options.prefix)
     this.act({ role: 'cache', cmd: 'get' }, { key: vkey }, function(
       err,
       result
@@ -224,8 +209,8 @@ function entity_cache(options) {
       // Version found
 
       ++stats.vhit
-      var key = dataKey(qent, id, version)
-      var record = hotcache.get(key)
+      var key = intern.make_data_key(qent, id, version, options.prefix)
+      var record = hotcache && hotcache.get(key)
       if (record) {
         // Entry found (hotcache)
 
@@ -254,7 +239,7 @@ function entity_cache(options) {
 
         if (ent_data) {
           ++stats.net_hit
-          hotcache.set(key, ent_data)
+          hotcache && hotcache.set(key, ent_data)
           self.log.debug('hit', 'net', key)
           return reply(qent.make$(ent_data))
         }
@@ -287,7 +272,8 @@ function entity_cache(options) {
         return reply(err)
       }
 
-      var vkey = versionKey(msg.qent, msg.q.id) // Only called with a valid entity id
+      // Only called with a valid entity id
+      var vkey = intern.make_version_key(msg.qent, msg.q.id, options.prefix)
       self.act(
         { role: 'cache', cmd: 'set' },
         { key: vkey, val: -1, expires: options.expires },
@@ -308,7 +294,7 @@ function entity_cache(options) {
   // Cache list
 
   /* NOTE: NOT IMPLEMENTED (YET)
-  var list = function vcache_list(msg, reply) {
+  var list = function entity_cache_list(msg, reply) {
     // Pass-through to underlying cache
     var self = this
     var list_prior = this.prior
@@ -365,15 +351,45 @@ function entity_cache(options) {
 
   function get_stats(msg, reply) {
     var result = { ...stats }
-    result.hotsize = hotcache.length
+    result.hotsize = hotcache ? hotcache.length : -1
     result.end = Date.now()
     this.log.debug('stats', result)
     return reply(result)
   }
 
   function list_hot_keys(msg, reply) {
-    reply({ keys: hotcache.keys() })
+    reply({ keys: hotcache ? hotcache.keys() : [] })
   }
 
-  return { name: 'vcache' }
+  function clear_hot_keys(msg, reply) {
+    hotcache && hotcache.reset()
+    reply()
+  }
+
+  return { name: 'entity-cache' }
 }
+
+
+const intern = (entity_cache.intern = {
+  make_version_key: function(ent, id, prefix) {
+    // Example: 'SE~v~zen/moon/bar~171qa9'
+
+    var key = prefix + '~v~' + ent.entity$ + '~' + id
+    return key
+  },
+
+  make_data_key: function(ent, id, version, prefix) {
+    // Example: 'SE~d~0~zen/moon/bar~171qa9'
+
+    var key =
+        prefix +
+        '~d~' +
+        version +
+        '~' +
+        ent.entity$ +
+        '~' +
+        id
+    return key
+  }
+
+})
