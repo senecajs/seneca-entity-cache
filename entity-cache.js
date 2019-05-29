@@ -214,7 +214,7 @@ function entity_cache(options) {
               return reply(err)
             }
 
-            return writeData(self, ent, 0, function(err) {
+            return writeData(self, ent, 1, function(err) {
               return reply(err || ent)
             })
           })
@@ -263,7 +263,15 @@ function entity_cache(options) {
 
         ++stats.net_miss
         self.log.debug('miss', 'net', key)
-        return reply()
+        return load_prior.call(self, msg, function(err, ent) {
+          if (err || !ent) {
+            // Error or not found
+            return reply(err)
+          }
+          return writeData(self, ent, version, function(err) {
+            return reply(err || ent)
+          })
+        })
       })
     })
   }
