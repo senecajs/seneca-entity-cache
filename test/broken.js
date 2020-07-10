@@ -3,14 +3,14 @@ var SenecaCache = require('@seneca/' +
 
 //console.log(SenecaCache)
 
-module.exports = function(options) {
+module.exports = function (options) {
   var seneca = this
   var control = { broken: true }
 
   var orig = seneca.add
 
-  seneca.add = function(criteria, fn) {
-    orig.call(seneca, criteria, function(args, callback, meta) {
+  seneca.add = function (criteria, fn) {
+    orig.call(seneca, criteria, function (args, callback, meta) {
       //console.log('BROKEN', control, criteria)
 
       if (
@@ -38,7 +38,7 @@ module.exports = function(options) {
   var result = SenecaCache.call(seneca, options)
 
   result.exports = {
-    control: control
+    control: control,
   }
 
   seneca.add = orig

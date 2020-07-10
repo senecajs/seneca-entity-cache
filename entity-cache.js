@@ -9,7 +9,7 @@ module.exports.defaults = {
   maxhot: 1111,
   maxage: 22222,
   expires: 3600, // 1 Hour
-  hot: true // hot cache active
+  hot: true, // hot cache active
 }
 
 function entity_cache(options) {
@@ -23,7 +23,7 @@ function entity_cache(options) {
     options.hot &&
     new LRUCache({
       max: options.maxhot,
-      maxAge: options.maxage // always expire ents - weak eventual consistency
+      maxAge: options.maxage, // always expire ents - weak eventual consistency
     })
 
   // Statistics
@@ -41,7 +41,7 @@ function entity_cache(options) {
     hot_miss: 0,
     net_miss: 0,
     drop: 0,
-    cache_errs: 0
+    cache_errs: 0,
   }
 
   seneca
@@ -51,16 +51,16 @@ function entity_cache(options) {
 
   // Cache write
 
-  var writeKey = function(seneca, vkey, reply) {
+  var writeKey = function (seneca, vkey, reply) {
     // New item
 
     var item = {
       key: vkey,
       val: 1,
-      expires: options.expires
+      expires: options.expires,
     }
 
-    seneca.act({ role: 'cache', cmd: 'set' }, item, function(err) {
+    seneca.act({ role: 'cache', cmd: 'set' }, item, function (err) {
       if (err) {
         ++stats.cache_errs
         return reply(err)
@@ -71,7 +71,7 @@ function entity_cache(options) {
     })
   }
 
-  var writeData = function(seneca, ent, version, reply) {
+  var writeData = function (seneca, ent, version, reply) {
     var key = intern.make_data_key(ent, ent.id, version, options.prefix)
     seneca.log.debug('set', key)
 
@@ -79,7 +79,7 @@ function entity_cache(options) {
     seneca.act(
       { role: 'cache', cmd: 'set' },
       { key: key, val: ent.data$(), expires: options.expires },
-      function(err, result) {
+      function (err, result) {
         var key = result && result.value
 
         if (err) {
@@ -91,7 +91,7 @@ function entity_cache(options) {
 
         ent.cache$ = ent.cache$ || {}
         ent.cache$.k = key
-        
+
         return reply(key)
       }
     )
@@ -103,7 +103,7 @@ function entity_cache(options) {
 
     // Pass to lower priority entity action first
 
-    save_prior.call(self, msg, function(err, ent) {
+    save_prior.call(self, msg, function (err, ent) {
       if (err) {
         return reply(err)
       }
@@ -112,7 +112,7 @@ function entity_cache(options) {
 
       var vkey = intern.make_version_key(ent, ent.id, options.prefix)
 
-      self.act({ role: 'cache', cmd: 'incr' }, { key: vkey, val: 1 }, function(
+      self.act({ role: 'cache', cmd: 'incr' }, { key: vkey, val: 1 }, function (
         err,
         result
       ) {
@@ -126,12 +126,12 @@ function entity_cache(options) {
         if (version === false) {
           // New item
 
-          writeKey(self, vkey, function(err) {
+          writeKey(self, vkey, function (err) {
             if (err) {
               return reply(err)
             }
 
-            writeData(self, ent, 1, function(err) {
+            writeData(self, ent, 1, function (err) {
               reply(err || ent)
             })
           })
@@ -142,7 +142,7 @@ function entity_cache(options) {
         // Updated item
 
         ++stats.vinc
-        writeData(self, ent, version, function(err) {
+        writeData(self, ent, version, function (err) {
           reply(err || ent)
         })
       })
@@ -168,7 +168,7 @@ function entity_cache(options) {
 
     var vkey = intern.make_version_key(qent, id, options.prefix)
 
-    this.act({ role: 'cache', cmd: 'get' }, { key: vkey }, function(
+    this.act({ role: 'cache', cmd: 'get' }, { key: vkey }, function (
       err,
       result
     ) {
@@ -192,20 +192,20 @@ function entity_cache(options) {
 
         // Pass to lower priority handler
 
-        return load_prior.call(self, msg, function(err, ent) {
+        return load_prior.call(self, msg, function (err, ent) {
           if (err || !ent) {
             // Error or not found
             return reply(err)
           }
 
-          ent.cache$ = {v:vkey}
-          
-          writeKey(self, vkey, function(err) {
+          ent.cache$ = { v: vkey }
+
+          writeKey(self, vkey, function (err) {
             if (err) {
               return reply(err)
             }
 
-            return writeData(self, ent, 1, function(err) {
+            return writeData(self, ent, 1, function (err) {
               return reply(err || ent)
             })
           })
@@ -223,7 +223,7 @@ function entity_cache(options) {
         self.log.debug('hit', 'hot', key)
         ++stats.hot_hit
         var ent = qent.make$(record)
-        ent.cache$ = {k:key,v:vkey}
+        ent.cache$ = { k: key, v: vkey }
         return reply(ent)
       }
 
@@ -232,7 +232,7 @@ function entity_cache(options) {
       self.log.debug('miss', 'hot', key)
       ++stats.hot_miss
 
-      self.act({ role: 'cache', cmd: 'get' }, { key: key }, function(
+      self.act({ role: 'cache', cmd: 'get' }, { key: key }, function (
         err,
         result
       ) {
@@ -258,12 +258,12 @@ function entity_cache(options) {
 
         ++stats.net_miss
         self.log.debug('miss', 'net', key)
-        return load_prior.call(self, msg, function(err, ent) {
+        return load_prior.call(self, msg, function (err, ent) {
           if (err || !ent) {
             // Error or not found
             return reply(err)
           }
-          return writeData(self, ent, version, function(err) {
+          return writeData(self, ent, version, function (err) {
             ent.cache$.v = vkey
             return reply(err || ent)
           })
@@ -278,7 +278,7 @@ function entity_cache(options) {
     var self = this
     var remove_prior = this.prior
 
-    remove_prior.call(self, msg, function(err, remove_ent) {
+    remove_prior.call(self, msg, function (err, remove_ent) {
       if (err) {
         return reply(err)
       }
@@ -288,7 +288,7 @@ function entity_cache(options) {
       self.act(
         { role: 'cache', cmd: 'set' },
         { key: vkey, val: -1, expires: options.expires },
-        function(err) {
+        function (err) {
           if (err) {
             ++stats.cache_errs
             return reply(err)
@@ -316,7 +316,7 @@ function entity_cache(options) {
 
   // Register cache interface
 
-  var registerHandlers = function(msg, flags) {
+  var registerHandlers = function (msg, flags) {
     if (flags.exact) {
       seneca.add({ ...msg, role: 'entity', cmd: 'save' }, save_action)
       seneca.add({ ...msg, role: 'entity', cmd: 'load' }, load_action)
@@ -329,26 +329,26 @@ function entity_cache(options) {
       save: save_action,
       load: load_action,
       //list: list,
-      remove: remove_action
+      remove: remove_action,
     }
 
     var core_patterns = [
       { role: 'entity', cmd: 'save' },
       { role: 'entity', cmd: 'load' },
       //{ role: 'entity', cmd: 'list' },
-      { role: 'entity', cmd: 'remove' }
+      { role: 'entity', cmd: 'remove' },
     ]
 
-    core_patterns.forEach(function(core_pat) {
+    core_patterns.forEach(function (core_pat) {
       var pats = seneca.list(core_pat)
-      pats.forEach(function(pat) {
+      pats.forEach(function (pat) {
         seneca.add(pat, actions[core_pat.cmd])
       })
     })
   }
 
   if (options.entities) {
-    options.entities.forEach(function(entspec) {
+    options.entities.forEach(function (entspec) {
       registerHandlers(
         'string' === typeof entspec ? seneca.util.parsecanon(entspec) : entspec,
         { exact: true }
@@ -381,17 +381,17 @@ function entity_cache(options) {
 }
 
 const intern = (entity_cache.intern = {
-  make_version_key: function(ent, id, prefix) {
+  make_version_key: function (ent, id, prefix) {
     // Example: 'SE~v~zen/moon/bar~171qa9'
 
     var key = prefix + '~v~' + ent.entity$ + '~' + id
     return key
   },
 
-  make_data_key: function(ent, id, version, prefix) {
+  make_data_key: function (ent, id, version, prefix) {
     // Example: 'SE~d~0~zen/moon/bar~171qa9'
 
     var key = prefix + '~d~' + version + '~' + ent.entity$ + '~' + id
     return key
-  }
+  },
 })

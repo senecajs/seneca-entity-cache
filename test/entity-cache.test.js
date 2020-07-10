@@ -1,6 +1,5 @@
 /* Copyright © 2012-2019 Richard Rodger and other contributors, MIT License. */
 
-
 // NOTE: runs multiple times (via package.json script) to test multiple cache servers
 // needs memcached and redis running for tests
 
@@ -29,15 +28,12 @@ var describe = lab.describe
 var it = make_it(lab)
 var expect = Code.expect
 
-lab.it('does not damage entities placed into LRUCache', async function() {
+lab.it('does not damage entities placed into LRUCache', async function () {
   var seneca = await seneca_instance().ready()
 
   var id = seneca.util.Nid()
 
-  var qaz0 = await seneca
-    .entity('qaz')
-    .data$({ id$: id, a: 1, b: 2 })
-    .save$()
+  var qaz0 = await seneca.entity('qaz').data$({ id$: id, a: 1, b: 2 }).save$()
   qaz0.c = 3
 
   var qaz0a1 = await seneca.entity('qaz').load$(id)
@@ -72,13 +68,13 @@ lab.it('does not damage entities placed into LRUCache', async function() {
     net_miss: 0,
     drop: 0,
     cache_errs: 0,
-    hotsize: 2
+    hotsize: 2,
   })
 
   var hot_keys = await seneca.post('plugin:entity-cache,list:hot-keys')
 
   expect(hot_keys).equal({
-    keys: ['SE~d~2~-/-/qaz~' + id, 'SE~d~1~-/-/qaz~' + id]
+    keys: ['SE~d~2~-/-/qaz~' + id, 'SE~d~1~-/-/qaz~' + id],
   })
 
   await seneca.post('plugin:entity-cache,clear:hot-keys')
@@ -86,7 +82,7 @@ lab.it('does not damage entities placed into LRUCache', async function() {
   hot_keys = await seneca.post('plugin:entity-cache,list:hot-keys')
 
   expect(hot_keys).equal({
-    keys: []
+    keys: [],
   })
 
   var qaz0c = await seneca.entity('qaz').load$(id)
@@ -107,23 +103,23 @@ lab.it('does not damage entities placed into LRUCache', async function() {
   hot_keys = await seneca.post('plugin:entity-cache,list:hot-keys')
 
   expect(hot_keys).equal({
-    keys: ['SE~d~1~-/-/qaz~' + qaz1md.id, 'SE~d~2~-/-/qaz~' + id]
+    keys: ['SE~d~1~-/-/qaz~' + qaz1md.id, 'SE~d~2~-/-/qaz~' + id],
   })
 })
 
-it('writes then reads a record', function(done) {
+it('writes then reads a record', function (done) {
   var seneca = seneca_instance()
 
-  seneca.ready(function() {
+  seneca.ready(function () {
     var type = internals.type()
     var entry = seneca.make(type, { a: 1 })
 
     // Save
-    entry.save$(function(err, saved) {
+    entry.save$(function (err, saved) {
       expect(err).to.not.exist()
       expect(saved.a).to.equal(entry.a)
 
-      seneca.act({ plugin: 'entity-cache', get: 'stats' }, function(
+      seneca.act({ plugin: 'entity-cache', get: 'stats' }, function (
         err,
         stats
       ) {
@@ -140,17 +136,17 @@ it('writes then reads a record', function(done) {
           net_miss: 0,
           drop: 0,
           cache_errs: 0,
-          hotsize: 1
+          hotsize: 1,
         })
 
         // Load
 
-        seneca.make(type).load$(saved.id, function(err, loaded) {
+        seneca.make(type).load$(saved.id, function (err, loaded) {
           expect(err).to.not.exist()
           expect(loaded.a).to.equal(entry.a)
           expect(loaded.id).to.equal(saved.id)
 
-          seneca.act({ plugin: 'entity-cache', get: 'stats' }, function(
+          seneca.act({ plugin: 'entity-cache', get: 'stats' }, function (
             err,
             stats
           ) {
@@ -167,14 +163,14 @@ it('writes then reads a record', function(done) {
               net_miss: 0,
               drop: 0,
               cache_errs: 0,
-              hotsize: 1
+              hotsize: 1,
             })
 
             // Remove
 
-            loaded.remove$(function(err) {
+            loaded.remove$(function (err) {
               expect(err).to.not.exist()
-              seneca.act({ plugin: 'entity-cache', get: 'stats' }, function(
+              seneca.act({ plugin: 'entity-cache', get: 'stats' }, function (
                 err,
                 stats
               ) {
@@ -191,7 +187,7 @@ it('writes then reads a record', function(done) {
                   net_miss: 0,
                   drop: 1,
                   cache_errs: 0,
-                  hotsize: 1
+                  hotsize: 1,
                 })
 
                 done()
@@ -204,19 +200,19 @@ it('writes then reads a record', function(done) {
   })
 })
 
-it('writes then reads a record with no hotcache', function(done) {
+it('writes then reads a record with no hotcache', function (done) {
   var seneca = seneca_instance({ hot: false })
 
-  seneca.ready(function() {
+  seneca.ready(function () {
     var type = internals.type()
     var entry = seneca.make(type, { a: 1 })
 
     // Save
-    entry.save$(function(err, saved) {
+    entry.save$(function (err, saved) {
       expect(err).to.not.exist()
       expect(saved.a).to.equal(entry.a)
 
-      seneca.act({ plugin: 'entity-cache', get: 'stats' }, function(
+      seneca.act({ plugin: 'entity-cache', get: 'stats' }, function (
         err,
         stats
       ) {
@@ -233,17 +229,17 @@ it('writes then reads a record with no hotcache', function(done) {
           net_miss: 0,
           drop: 0,
           cache_errs: 0,
-          hotsize: -1
+          hotsize: -1,
         })
 
         // Load
 
-        seneca.make(type).load$(saved.id, function(err, loaded) {
+        seneca.make(type).load$(saved.id, function (err, loaded) {
           expect(err).to.not.exist()
           expect(loaded.a).to.equal(entry.a)
           expect(loaded.id).to.equal(saved.id)
 
-          seneca.act({ plugin: 'entity-cache', get: 'stats' }, function(
+          seneca.act({ plugin: 'entity-cache', get: 'stats' }, function (
             err,
             stats
           ) {
@@ -260,14 +256,14 @@ it('writes then reads a record with no hotcache', function(done) {
               net_miss: 0,
               drop: 0,
               cache_errs: 0,
-              hotsize: -1
+              hotsize: -1,
             })
 
             // Remove
 
-            loaded.remove$(function(err) {
+            loaded.remove$(function (err) {
               expect(err).to.not.exist()
-              seneca.act({ plugin: 'entity-cache', get: 'stats' }, function(
+              seneca.act({ plugin: 'entity-cache', get: 'stats' }, function (
                 err,
                 stats
               ) {
@@ -284,7 +280,7 @@ it('writes then reads a record with no hotcache', function(done) {
                   net_miss: 0,
                   drop: 1,
                   cache_errs: 0,
-                  hotsize: -1
+                  hotsize: -1,
                 })
 
                 done()
@@ -297,20 +293,20 @@ it('writes then reads a record with no hotcache', function(done) {
   })
 })
 
-it('updates a record', function(done) {
+it('updates a record', function (done) {
   var seneca = seneca_instance()
 
-  seneca.ready(function() {
+  seneca.ready(function () {
     var type = internals.type()
     var entry = seneca.make(type, { a: 1 })
 
     // Save
 
-    entry.save$(function(err, saved) {
+    entry.save$(function (err, saved) {
       var id = saved.id
       saved.b = 5
 
-      seneca.act({ plugin: 'entity-cache', get: 'stats' }, function(
+      seneca.act({ plugin: 'entity-cache', get: 'stats' }, function (
         err,
         stats
       ) {
@@ -327,17 +323,17 @@ it('updates a record', function(done) {
           net_miss: 0,
           drop: 0,
           cache_errs: 0,
-          hotsize: 1
+          hotsize: 1,
         })
 
         // Update
 
-        saved.save$(function(err, modified) {
+        saved.save$(function (err, modified) {
           expect(err).to.not.exist()
           expect(modified.b).to.equal(5)
           expect(modified.id).to.equal(id)
 
-          seneca.act({ plugin: 'entity-cache', get: 'stats' }, function(
+          seneca.act({ plugin: 'entity-cache', get: 'stats' }, function (
             err,
             stats
           ) {
@@ -351,18 +347,18 @@ it('updates a record', function(done) {
               hot_miss: 0,
               net_miss: 0,
               drop: 0,
-              cache_errs: 0
+              cache_errs: 0,
             })
 
             // Load
 
-            seneca.make(type).load$(id, function(err, loaded) {
+            seneca.make(type).load$(id, function (err, loaded) {
               expect(err).to.not.exist()
               expect(loaded.a).to.equal(1)
               expect(loaded.b).to.equal(5)
               expect(loaded.id).to.equal(id)
 
-              seneca.act({ plugin: 'entity-cache', get: 'stats' }, function(
+              seneca.act({ plugin: 'entity-cache', get: 'stats' }, function (
                 err,
                 stats
               ) {
@@ -376,32 +372,32 @@ it('updates a record', function(done) {
                   hot_miss: 0,
                   net_miss: 0,
                   drop: 0,
-                  cache_errs: 0
+                  cache_errs: 0,
                 })
 
                 // Remove
 
-                loaded.remove$(function(err) {
+                loaded.remove$(function (err) {
                   expect(err).to.not.exist()
-                  seneca.act({ plugin: 'entity-cache', get: 'stats' }, function(
-                    err,
-                    stats
-                  ) {
-                    expect(stats).to.contain({
-                      set: 2,
-                      get: 1,
-                      vmiss: 0,
-                      vhit: 1,
-                      hot_hit: 1,
-                      net_hit: 0,
-                      hot_miss: 0,
-                      net_miss: 0,
-                      drop: 1,
-                      cache_errs: 0
-                    })
+                  seneca.act(
+                    { plugin: 'entity-cache', get: 'stats' },
+                    function (err, stats) {
+                      expect(stats).to.contain({
+                        set: 2,
+                        get: 1,
+                        vmiss: 0,
+                        vhit: 1,
+                        hot_hit: 1,
+                        net_hit: 0,
+                        hot_miss: 0,
+                        net_miss: 0,
+                        drop: 1,
+                        cache_errs: 0,
+                      })
 
-                    done()
-                  })
+                      done()
+                    }
+                  )
                 })
               })
             })
@@ -412,16 +408,14 @@ it('updates a record', function(done) {
   })
 })
 
-describe('save()', function() {
-  it('handles errors in upstream cache (incr)', function(done) {
-    var seneca = Seneca()
-        .test()
-        .quiet()
+describe('save()', function () {
+  it('handles errors in upstream cache (incr)', function (done) {
+    var seneca = Seneca().test().quiet()
     seneca.use('entity')
     seneca.use('./broken')
     seneca.use(EntityCache)
 
-    seneca.ready(function() {
+    seneca.ready(function () {
       var control = this.export(SENECA_CACHE_PLUGIN + '/control')
       control.incr = true
 
@@ -430,11 +424,11 @@ describe('save()', function() {
 
       // Save
 
-      entry.save$(function(err, saved) {
+      entry.save$(function (err, saved) {
         expect(err).to.exist()
         expect(saved).not.exist()
 
-        seneca.act({ plugin: 'entity-cache', get: 'stats' }, function(
+        seneca.act({ plugin: 'entity-cache', get: 'stats' }, function (
           err,
           stats
         ) {
@@ -451,7 +445,7 @@ describe('save()', function() {
             net_miss: 0,
             drop: 0,
             cache_errs: 1,
-            hotsize: 0
+            hotsize: 0,
           })
 
           done()
@@ -460,14 +454,12 @@ describe('save()', function() {
     })
   })
 
-  it('handles errors lower priority entity service', function(done) {
-    var seneca = Seneca()
-      .test()
-      .quiet()
+  it('handles errors lower priority entity service', function (done) {
+    var seneca = Seneca().test().quiet()
     seneca.use('entity')
     seneca.use(SENECA_CACHE_PLUGIN)
 
-    seneca.ready(function() {
+    seneca.ready(function () {
       seneca.add({ role: 'entity', cmd: 'save' }, function bad_entity_save(
         ignore,
         callback
@@ -477,13 +469,13 @@ describe('save()', function() {
 
       seneca.use(EntityCache)
 
-      seneca.ready(function() {
+      seneca.ready(function () {
         var type = internals.type()
         var entry = seneca.make(type, { a: 1 })
 
         // Save
 
-        entry.save$(function(err, saved) {
+        entry.save$(function (err, saved) {
           expect(err).to.exist()
           expect(saved).not.exist()
           done()
@@ -492,16 +484,14 @@ describe('save()', function() {
     })
   })
 
-  it('handles upstream error when updating a record (writeData) - qqq', function(done) {
-    var seneca = Seneca()
-      .test()
-      .quiet()
+  it('handles upstream error when updating a record (writeData) - qqq', function (done) {
+    var seneca = Seneca().test().quiet()
     seneca.use('entity')
 
     seneca.use('./broken')
     seneca.use(EntityCache)
 
-    seneca.ready(function() {
+    seneca.ready(function () {
       var control = this.export(SENECA_CACHE_PLUGIN + '/control')
 
       var type = internals.type()
@@ -509,7 +499,7 @@ describe('save()', function() {
 
       // Save
 
-      entry.save$(function(err, saved) {
+      entry.save$(function (err, saved) {
         expect(saved).to.exist()
         saved.b = 5
 
@@ -517,7 +507,7 @@ describe('save()', function() {
 
         control.set = true
 
-        saved.save$(function(err, modified) {
+        saved.save$(function (err, modified) {
           expect(err).to.exist()
           expect(modified).not.exist()
 
@@ -525,9 +515,9 @@ describe('save()', function() {
 
           control.set = false
 
-          saved.remove$(function(err) {
+          saved.remove$(function (err) {
             expect(err).to.not.exist()
-            seneca.act({ plugin: 'entity-cache', get: 'stats' }, function(
+            seneca.act({ plugin: 'entity-cache', get: 'stats' }, function (
               err,
               stats
             ) {
@@ -542,7 +532,7 @@ describe('save()', function() {
                 hot_miss: 0,
                 net_miss: 0,
                 drop: 1,
-                cache_errs: 1
+                cache_errs: 1,
               })
 
               done()
@@ -554,66 +544,34 @@ describe('save()', function() {
   })
 })
 
-describe('load()', function() {
-  it('happy-load', function(done) {
+describe('load()', function () {
+  it('happy-load', function (done) {
     var seneca = seneca_instance()
 
-    seneca.ready(function() {
+    seneca.ready(function () {
       var type = internals.type()
       var entry = seneca.make(type, { a: 1, b: 2, c: 3 })
 
       // Save
 
-      entry.save$(function(err, saved) {
+      entry.save$(function (err, saved) {
         expect(saved).to.exist()
         expect(err).to.not.exist()
 
-        seneca
-          .make(type)
-          .load$({ id: saved.id },
-                 function(err, loaded) {
-                   expect(err).to.not.exist()
-                   expect(loaded).to.exist()
-
-                   expect(loaded.data$(false)).equal({
-                     a: 1,
-                     b: 2,
-                     c: 3,
-                     id: saved.id
-                   })
-
-                   expect(loaded.cache$).exists()
-                   
-                   saved.remove$(function(err) {
-                     expect(err).to.not.exist()
-                     done()
-                   })
-                 })
-      })
-    })
-  })
-
-
-  it('handles an object criteria', function(done) {
-    var seneca = seneca_instance()
-
-    seneca.ready(function() {
-      var type = internals.type()
-      var entry = seneca.make(type, { a: 1 })
-
-      // Save
-
-      entry.save$(function(err, saved) {
-        expect(saved).to.exist()
-        expect(err).to.not.exist()
-
-        seneca.make(type).load$({ a: 1 }, function(err, loaded) {
+        seneca.make(type).load$({ id: saved.id }, function (err, loaded) {
           expect(err).to.not.exist()
           expect(loaded).to.exist()
 
-          expect(loaded.cache$).not.exists()
-          
-          saved.remove$(function(err) {
+          expect(loaded.data$(false)).equal({
+            a: 1,
+            b: 2,
+            c: 3,
+            id: saved.id,
+          })
+
+          expect(loaded.cache$).exists()
+
+          saved.remove$(function (err) {
             expect(err).to.not.exist()
             done()
           })
@@ -622,26 +580,26 @@ describe('load()', function() {
     })
   })
 
-  it('skips an object criteria with multiple keys', function(done) {
+  it('handles an object criteria', function (done) {
     var seneca = seneca_instance()
 
-    seneca.ready(function() {
+    seneca.ready(function () {
       var type = internals.type()
       var entry = seneca.make(type, { a: 1 })
 
       // Save
 
-      entry.save$(function(err, saved) {
+      entry.save$(function (err, saved) {
         expect(saved).to.exist()
         expect(err).to.not.exist()
 
-        seneca.make(type).load$({ id: saved.id, a: 1 }, function(err, loaded) {
+        seneca.make(type).load$({ a: 1 }, function (err, loaded) {
           expect(err).to.not.exist()
           expect(loaded).to.exist()
 
           expect(loaded.cache$).not.exists()
-          
-          saved.remove$(function(err) {
+
+          saved.remove$(function (err) {
             expect(err).to.not.exist()
             done()
           })
@@ -650,63 +608,88 @@ describe('load()', function() {
     })
   })
 
-
-  it('skips-fields', function(done) {
+  it('skips an object criteria with multiple keys', function (done) {
     var seneca = seneca_instance()
 
-    seneca.ready(function() {
+    seneca.ready(function () {
+      var type = internals.type()
+      var entry = seneca.make(type, { a: 1 })
+
+      // Save
+
+      entry.save$(function (err, saved) {
+        expect(saved).to.exist()
+        expect(err).to.not.exist()
+
+        seneca.make(type).load$({ id: saved.id, a: 1 }, function (err, loaded) {
+          expect(err).to.not.exist()
+          expect(loaded).to.exist()
+
+          expect(loaded.cache$).not.exists()
+
+          saved.remove$(function (err) {
+            expect(err).to.not.exist()
+            done()
+          })
+        })
+      })
+    })
+  })
+
+  it('skips-fields', function (done) {
+    var seneca = seneca_instance()
+
+    seneca.ready(function () {
       var type = internals.type()
       var entry = seneca.make(type, { a: 1, b: 2, c: 3 })
 
       // Save
 
-      entry.save$(function(err, saved) {
+      entry.save$(function (err, saved) {
         expect(saved).to.exist()
         expect(err).to.not.exist()
 
         seneca
           .make(type)
-          .load$({ id: saved.id, fields$:['a','b'] },
-                 function(err, loaded) {
-                   expect(err).to.not.exist()
-                   expect(loaded).to.exist()
+          .load$({ id: saved.id, fields$: ['a', 'b'] }, function (err, loaded) {
+            expect(err).to.not.exist()
+            expect(loaded).to.exist()
 
-                   expect(loaded.data$(false)).equal({
-                     a: 1,
-                     b: 2,
-                     id: saved.id
-                   })
-                   
-                   expect(loaded.cache$).not.exists()
-                   
-                   saved.remove$(function(err) {
-                     expect(err).to.not.exist()
-                     done()
-                   })
-                 })
+            expect(loaded.data$(false)).equal({
+              a: 1,
+              b: 2,
+              id: saved.id,
+            })
+
+            expect(loaded.cache$).not.exists()
+
+            saved.remove$(function (err) {
+              expect(err).to.not.exist()
+              done()
+            })
+          })
       })
     })
   })
 
-  
-  it('handles a number id', function(done) {
+  it('handles a number id', function (done) {
     var seneca = seneca_instance()
 
-    seneca.ready(function() {
+    seneca.ready(function () {
       var type = internals.type()
       var entry = seneca.make(type, { a: 10 })
 
       // Save
 
-      entry.save$(function(err, saved) {
+      entry.save$(function (err, saved) {
         expect(saved).to.exist()
         expect(err).to.not.exist()
 
-        seneca.make(type).load$(123, function(err, loaded) {
+        seneca.make(type).load$(123, function (err, loaded) {
           expect(err).to.not.exist()
           expect(loaded).to.not.exist()
 
-          saved.remove$(function(err) {
+          saved.remove$(function (err) {
             expect(err).to.not.exist()
             done()
           })
@@ -715,16 +698,16 @@ describe('load()', function() {
     })
   })
 
-  it('reports miss when item not found', function(done) {
+  it('reports miss when item not found', function (done) {
     var seneca = seneca_instance()
 
     var type = internals.type()
 
-    seneca.make(type).load$('unknown', function(err, loaded) {
+    seneca.make(type).load$('unknown', function (err, loaded) {
       expect(err).to.not.exist()
       expect(loaded).to.not.exist()
 
-      seneca.act({ plugin: 'entity-cache', get: 'stats' }, function(
+      seneca.act({ plugin: 'entity-cache', get: 'stats' }, function (
         err,
         stats
       ) {
@@ -741,7 +724,7 @@ describe('load()', function() {
           net_miss: 0,
           drop: 0,
           cache_errs: 0,
-          hotsize: 0
+          hotsize: 0,
         })
 
         done()
@@ -749,16 +732,16 @@ describe('load()', function() {
     })
   })
 
-  it('adds a record from full cache to hot cache', function(done) {
+  it('adds a record from full cache to hot cache', function (done) {
     var seneca = seneca_instance()
 
-    seneca.ready(function() {
+    seneca.ready(function () {
       var type = internals.type()
       var entry = seneca.make(type, { a: 1 })
 
       // Save
 
-      entry.save$(function(err, saved) {
+      entry.save$(function (err, saved) {
         expect(saved).to.exist()
         expect(err).to.not.exist()
         expect(saved.a).to.equal(entry.a)
@@ -767,12 +750,12 @@ describe('load()', function() {
 
         // Load
 
-        seneca.make(type).load$(saved.id, function(err, loaded) {
+        seneca.make(type).load$(saved.id, function (err, loaded) {
           expect(err).to.not.exist()
           expect(loaded.a).to.equal(entry.a)
           expect(loaded.id).to.equal(saved.id)
 
-          seneca.act({ plugin: 'entity-cache', get: 'stats' }, function(
+          seneca.act({ plugin: 'entity-cache', get: 'stats' }, function (
             err,
             stats
           ) {
@@ -789,12 +772,12 @@ describe('load()', function() {
               net_miss: 0,
               drop: 0,
               cache_errs: 0,
-              hotsize: 1
+              hotsize: 1,
             })
 
             // Remove
 
-            loaded.remove$(function(err) {
+            loaded.remove$(function (err) {
               expect(err).to.not.exist()
               done()
             })
@@ -804,33 +787,33 @@ describe('load()', function() {
     })
   })
 
-  it('handles evicted value from hot cache', function(done) {
+  it('handles evicted value from hot cache', function (done) {
     var seneca = seneca_instance({ maxhot: 1 })
 
-    seneca.ready(function() {
+    seneca.ready(function () {
       var type = internals.type()
       var entry = seneca.make(type, { a: 1 })
 
       // Save
 
-      entry.save$(function(err, saved1) {
+      entry.save$(function (err, saved1) {
         expect(err).to.not.exist()
         expect(saved1.a).to.equal(entry.a)
 
         // Save another
 
         var another = seneca.make(type, { a: 2 })
-        another.save$(function(err, saved2) {
+        another.save$(function (err, saved2) {
           expect(err).to.not.exist()
 
           // Load
 
-          seneca.make(type).load$(saved1.id, function(err, loaded) {
+          seneca.make(type).load$(saved1.id, function (err, loaded) {
             expect(err).to.not.exist()
             expect(loaded.a).to.equal(entry.a)
             expect(loaded.id).to.equal(saved1.id)
 
-            seneca.act({ plugin: 'entity-cache', get: 'stats' }, function(
+            seneca.act({ plugin: 'entity-cache', get: 'stats' }, function (
               err,
               stats
             ) {
@@ -847,15 +830,15 @@ describe('load()', function() {
                 net_miss: 0,
                 drop: 0,
                 cache_errs: 0,
-                hotsize: 1
+                hotsize: 1,
               })
 
               // Remove
 
-              saved1.remove$(function(err) {
+              saved1.remove$(function (err) {
                 expect(err).to.not.exist()
 
-                saved2.remove$(function(err) {
+                saved2.remove$(function (err) {
                   expect(err).to.not.exist()
                   done()
                 })
@@ -867,41 +850,41 @@ describe('load()', function() {
     })
   })
 
-  it('handles evicted value from hot cache and upstream', function(done) {
+  it('handles evicted value from hot cache and upstream', function (done) {
     var seneca = seneca_instance({ maxhot: 1 })
 
-    seneca.ready(function() {
+    seneca.ready(function () {
       var type = internals.type()
       var entry = seneca.make(type, { a: 1 })
 
       // Save
 
-      entry.save$(function(err, saved1) {
+      entry.save$(function (err, saved1) {
         expect(err).to.not.exist()
         expect(saved1.a).to.equal(entry.a)
 
         // Save another
 
         var another = seneca.make(type, { a: 2 })
-        another.save$(function(err, saved2) {
+        another.save$(function (err, saved2) {
           expect(err).to.not.exist()
 
           // Drop from upstream cache
 
           seneca.act(
             'role:cache, cmd:delete, key:SE~d~1~-/-/' + type + '~' + saved1.id,
-            function(err, result) {
+            function (err, result) {
               expect(result).to.exist()
               expect(err).to.not.exist()
 
               // Load
 
-              seneca.make(type).load$(saved1.id, function(err, loaded) {
+              seneca.make(type).load$(saved1.id, function (err, loaded) {
                 expect(err).to.not.exist()
                 expect(loaded.a).to.equal(entry.a)
                 expect(loaded.id).to.equal(saved1.id)
 
-                seneca.act({ plugin: 'entity-cache', get: 'stats' }, function(
+                seneca.act({ plugin: 'entity-cache', get: 'stats' }, function (
                   err,
                   stats
                 ) {
@@ -918,15 +901,15 @@ describe('load()', function() {
                     net_miss: 1,
                     drop: 0,
                     cache_errs: 0,
-                    hotsize: 1
+                    hotsize: 1,
                   })
 
                   // Remove
 
-                  saved1.remove$(function(err) {
+                  saved1.remove$(function (err) {
                     expect(err).to.not.exist()
 
-                    saved2.remove$(function(err) {
+                    saved2.remove$(function (err) {
                       expect(err).to.not.exist()
                       done()
                     })
@@ -940,25 +923,23 @@ describe('load()', function() {
     })
   })
 
-  it('errors on failed upstream vkey lookup', function(done) {
-    var seneca = Seneca()
-      .test()
-      .quiet()
+  it('errors on failed upstream vkey lookup', function (done) {
+    var seneca = Seneca().test().quiet()
     seneca.use('entity')
     seneca.use('./broken') //, { disable: { get: true } });
     seneca.use(EntityCache)
 
     var type = internals.type()
 
-    seneca.ready(function() {
+    seneca.ready(function () {
       var control = this.export(SENECA_CACHE_PLUGIN + '/control')
       control.get = true
 
-      seneca.make(type).load$('unknown', function(err, loaded) {
+      seneca.make(type).load$('unknown', function (err, loaded) {
         expect(err).to.exist()
         expect(loaded).to.not.exist()
 
-        seneca.act({ plugin: 'entity-cache', get: 'stats' }, function(
+        seneca.act({ plugin: 'entity-cache', get: 'stats' }, function (
           err,
           stats
         ) {
@@ -975,7 +956,7 @@ describe('load()', function() {
             net_miss: 0,
             drop: 0,
             cache_errs: 1,
-            hotsize: 0
+            hotsize: 0,
           })
 
           done()
@@ -984,17 +965,17 @@ describe('load()', function() {
     })
   })
 
-  it('passes lower priority load error', function(done) {
+  it('passes lower priority load error', function (done) {
     var seneca = seneca_instance().quiet()
 
-    seneca.ready(function() {
-      seneca.add({ role: 'entity', cmd: 'load' }, function(ignore, callback) {
+    seneca.ready(function () {
+      seneca.add({ role: 'entity', cmd: 'load' }, function (ignore, callback) {
         return callback(new Error('Bad entity service'))
       })
 
       var type = internals.type()
 
-      seneca.make(type).load$('unknown', function(err, loaded) {
+      seneca.make(type).load$('unknown', function (err, loaded) {
         expect(err).to.exist()
         expect(loaded).to.not.exist()
         done()
@@ -1002,17 +983,15 @@ describe('load()', function() {
     })
   })
 
-  it('handles upstream cache get error after value evicted from hot cache', function(done) {
-    var seneca = Seneca()
-      .test()
-      .quiet()
+  it('handles upstream cache get error after value evicted from hot cache', function (done) {
+    var seneca = Seneca().test().quiet()
     seneca.use('entity')
 
     //var disable = { get: false }
     seneca.use('./broken') //, { disable: disable })
     seneca.use('..', { maxhot: 1 })
 
-    seneca.ready(function() {
+    seneca.ready(function () {
       var control = this.export(SENECA_CACHE_PLUGIN + '/control')
       control.get = false
 
@@ -1021,27 +1000,27 @@ describe('load()', function() {
 
       // Save
 
-      entry.save$(function(err, saved1) {
+      entry.save$(function (err, saved1) {
         expect(err).to.not.exist()
         expect(saved1.a).to.equal(entry.a)
 
         // Save another
 
         var another = seneca.make(type, { a: 2 })
-        another.save$(function(err, saved2) {
+        another.save$(function (err, saved2) {
           expect(err).to.not.exist()
 
           // Load
 
           control.get = 1
 
-          seneca.make(type).load$(saved1.id, function(err, loaded) {
+          seneca.make(type).load$(saved1.id, function (err, loaded) {
             control.get = false
 
             expect(err).to.exist()
             expect(loaded).to.not.exist()
 
-            seneca.act({ plugin: 'entity-cache', get: 'stats' }, function(
+            seneca.act({ plugin: 'entity-cache', get: 'stats' }, function (
               err,
               stats
             ) {
@@ -1058,15 +1037,15 @@ describe('load()', function() {
                 net_miss: 0,
                 drop: 0,
                 cache_errs: 1,
-                hotsize: 1
+                hotsize: 1,
               })
 
               // Remove
 
-              saved1.remove$(function(err) {
+              saved1.remove$(function (err) {
                 expect(err).to.not.exist()
 
-                saved2.remove$(function(err) {
+                saved2.remove$(function (err) {
                   expect(err).to.not.exist()
                   done()
                 })
@@ -1079,54 +1058,55 @@ describe('load()', function() {
   })
 })
 
-describe('remove()', function() {
-  it('passes lower priority remove error', function(done) {
+describe('remove()', function () {
+  it('passes lower priority remove error', function (done) {
     var seneca = seneca_instance().quiet()
 
     var type = internals.type()
 
-    seneca.ready(function() {
-      seneca.add({ role: 'entity', cmd: 'remove' }, function(ignore, callback) {
+    seneca.ready(function () {
+      seneca.add({ role: 'entity', cmd: 'remove' }, function (
+        ignore,
+        callback
+      ) {
         return callback(new Error('Bad entity service'))
       })
 
-      seneca.make(type, { id: 'none' }).remove$(function(err) {
+      seneca.make(type, { id: 'none' }).remove$(function (err) {
         expect(err).to.exist()
         done()
       })
     })
   })
 
-  it('skips unsupported id types', function(done) {
+  it('skips unsupported id types', function (done) {
     var seneca = seneca_instance()
 
     var type = internals.type()
     var entry = seneca.make(type, { b: '123', a: 4 })
 
-    entry.remove$(function(err) {
+    entry.remove$(function (err) {
       expect(err).to.not.exist()
       done()
     })
   })
 
-  it('errors on upstream set error', function(done) {
-    var seneca = Seneca()
-      .test()
-      .quiet()
+  it('errors on upstream set error', function (done) {
+    var seneca = Seneca().test().quiet()
     seneca.use('entity')
     seneca.use('./broken') //, { disable: { set: true } })
     seneca.use(EntityCache)
 
     var type = internals.type()
 
-    seneca.ready(function() {
+    seneca.ready(function () {
       var control = this.export(SENECA_CACHE_PLUGIN + '/control')
       control.set = true
 
-      seneca.make(type, { id: 'none' }).remove$(function(err) {
+      seneca.make(type, { id: 'none' }).remove$(function (err) {
         expect(err).to.exist()
 
-        seneca.act({ plugin: 'entity-cache', get: 'stats' }, function(
+        seneca.act({ plugin: 'entity-cache', get: 'stats' }, function (
           err,
           stats
         ) {
@@ -1143,7 +1123,7 @@ describe('remove()', function() {
             net_miss: 0,
             drop: 0,
             cache_errs: 1,
-            hotsize: 0
+            hotsize: 0,
           })
 
           done()
@@ -1153,19 +1133,19 @@ describe('remove()', function() {
   })
 })
 
-describe('list()', function() {
-  it('returns list of entries', function(done) {
+describe('list()', function () {
+  it('returns list of entries', function (done) {
     var seneca = seneca_instance()
 
     var entry = seneca.make('foo', { a: 4 })
-    entry.save$(function(err, saved) {
+    entry.save$(function (err, saved) {
       expect(saved).to.exist()
       expect(err).to.not.exist()
-      entry.list$(function(err, list) {
+      entry.list$(function (err, list) {
         expect(err).to.not.exist()
         expect(list.length).to.equal(1)
 
-        saved.remove$(function(err) {
+        saved.remove$(function (err) {
           expect(err).to.not.exist()
           done()
         })
@@ -1173,12 +1153,12 @@ describe('list()', function() {
     })
   })
 
-  it('returns empty list', function(done) {
+  it('returns empty list', function (done) {
     var seneca = seneca_instance()
 
-    seneca.ready(function() {
+    seneca.ready(function () {
       var entry = seneca.make('foo', { a: 5 })
-      entry.list$(function(err, list) {
+      entry.list$(function (err, list) {
         expect(err).to.not.exist()
         expect(list.length).to.equal(0)
         done()
@@ -1187,17 +1167,17 @@ describe('list()', function() {
   })
 })
 
-describe('registerHandlers()', function() {
-  it('registers plugin with entities setting (object)', function(done) {
+describe('registerHandlers()', function () {
+  it('registers plugin with entities setting (object)', function (done) {
     var seneca = seneca_instance({ entities: [{ base: 'test' }] })
 
     var entry = seneca.make('test', 'foo', { a: 4 })
-    entry.save$(function(err, saved) {
+    entry.save$(function (err, saved) {
       expect(saved).to.exist()
       var outside = seneca.make('foo', { a: 4 })
-      outside.save$(function(err, outsideSaved) {
+      outside.save$(function (err, outsideSaved) {
         expect(err).to.not.exist()
-        seneca.act({ plugin: 'entity-cache', get: 'stats' }, function(
+        seneca.act({ plugin: 'entity-cache', get: 'stats' }, function (
           err,
           stats
         ) {
@@ -1214,12 +1194,12 @@ describe('registerHandlers()', function() {
             net_miss: 0,
             drop: 0,
             cache_errs: 0,
-            hotsize: 1
+            hotsize: 1,
           })
 
-          saved.remove$(function(err) {
+          saved.remove$(function (err) {
             expect(err).to.not.exist()
-            outsideSaved.remove$(function(err) {
+            outsideSaved.remove$(function (err) {
               expect(err).to.not.exist()
               done()
             })
@@ -1229,16 +1209,16 @@ describe('registerHandlers()', function() {
     })
   })
 
-  it('registers plugin with entities setting (string)', function(done) {
+  it('registers plugin with entities setting (string)', function (done) {
     var seneca = seneca_instance({ entities: ['-/test/-'] })
 
     var entry = seneca.make('test', 'foo', { a: 4 })
-    entry.save$(function(err, saved) {
+    entry.save$(function (err, saved) {
       expect(saved).to.exist()
       var outside = seneca.make('foo', { a: 4 })
-      outside.save$(function(err, outsideSaved) {
+      outside.save$(function (err, outsideSaved) {
         expect(err).to.not.exist()
-        seneca.act({ plugin: 'entity-cache', get: 'stats' }, function(
+        seneca.act({ plugin: 'entity-cache', get: 'stats' }, function (
           err,
           stats
         ) {
@@ -1255,12 +1235,12 @@ describe('registerHandlers()', function() {
             net_miss: 0,
             drop: 0,
             cache_errs: 0,
-            hotsize: 1
+            hotsize: 1,
           })
 
-          saved.remove$(function(err) {
+          saved.remove$(function (err) {
             expect(err).to.not.exist()
-            outsideSaved.remove$(function(err) {
+            outsideSaved.remove$(function (err) {
               expect(err).to.not.exist()
               done()
             })
@@ -1271,7 +1251,7 @@ describe('registerHandlers()', function() {
   })
 })
 
-internals.type = function() {
+internals.type = function () {
   return Crypto.randomBytes(8).toString('hex') + Date.now()
 }
 
@@ -1285,7 +1265,7 @@ function make_it(lab) {
     lab.it(
       name,
       opts,
-      Util.promisify(function(x, fin) {
+      Util.promisify(function (x, fin) {
         func(fin)
       })
     )

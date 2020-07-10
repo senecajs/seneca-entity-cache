@@ -1,13 +1,13 @@
 {
   "name": "@seneca/entity-cache",
-  "version": "0.2.0",
+  "version": "1.0.0",
   "description": "Versioned caching plugin for seneca",
   "main": "entity-cache.js",
   "scripts": {
     "test": "npm run lab && SENECA_CACHE_PLUGIN=cache npm run lab && SENECA_CACHE_PLUGIN=redis-cache npm run lab",
     "lab": "lab -v -P test -t 10",
     "doc": "seneca-doc",
-    "prettier": "prettier --write --no-semi --single-quote *.js lib/*.js test/*.js",
+    "prettier": "prettier --write --no-semi --single-quote *.js test/*.js",
     "coveralls": "lab -s -P test -r lcov | coveralls",
     "clean": "rm -rf node_modules package-lock.json yarn.lock",
     "repo-tag": "REPO_VERSION=`node -e \"console.log(require('./package').version)\"` && echo TAG: v$REPO_VERSION && git commit -a -m v$REPO_VERSION && git push && git tag v$REPO_VERSION && git push --tags;",
