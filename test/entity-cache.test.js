@@ -555,6 +555,45 @@ describe('save()', function() {
 })
 
 describe('load()', function() {
+  it('happy-load', function(done) {
+    var seneca = seneca_instance()
+
+    seneca.ready(function() {
+      var type = internals.type()
+      var entry = seneca.make(type, { a: 1, b: 2, c: 3 })
+
+      // Save
+
+      entry.save$(function(err, saved) {
+        expect(saved).to.exist()
+        expect(err).to.not.exist()
+
+        seneca
+          .make(type)
+          .load$({ id: saved.id },
+                 function(err, loaded) {
+                   expect(err).to.not.exist()
+                   expect(loaded).to.exist()
+
+                   expect(loaded.data$(false)).equal({
+                     a: 1,
+                     b: 2,
+                     c: 3,
+                     id: saved.id
+                   })
+
+                   expect(loaded.cache$).exists()
+                   
+                   saved.remove$(function(err) {
+                     expect(err).to.not.exist()
+                     done()
+                   })
+                 })
+      })
+    })
+  })
+
+
   it('handles an object criteria', function(done) {
     var seneca = seneca_instance()
 
@@ -572,6 +611,8 @@ describe('load()', function() {
           expect(err).to.not.exist()
           expect(loaded).to.exist()
 
+          expect(loaded.cache$).not.exists()
+          
           saved.remove$(function(err) {
             expect(err).to.not.exist()
             done()
@@ -598,6 +639,8 @@ describe('load()', function() {
           expect(err).to.not.exist()
           expect(loaded).to.exist()
 
+          expect(loaded.cache$).not.exists()
+          
           saved.remove$(function(err) {
             expect(err).to.not.exist()
             done()
@@ -607,6 +650,45 @@ describe('load()', function() {
     })
   })
 
+
+  it('skips-fields', function(done) {
+    var seneca = seneca_instance()
+
+    seneca.ready(function() {
+      var type = internals.type()
+      var entry = seneca.make(type, { a: 1, b: 2, c: 3 })
+
+      // Save
+
+      entry.save$(function(err, saved) {
+        expect(saved).to.exist()
+        expect(err).to.not.exist()
+
+        seneca
+          .make(type)
+          .load$({ id: saved.id, fields$:['a','b'] },
+                 function(err, loaded) {
+                   expect(err).to.not.exist()
+                   expect(loaded).to.exist()
+
+                   expect(loaded.data$(false)).equal({
+                     a: 1,
+                     b: 2,
+                     id: saved.id
+                   })
+                   
+                   expect(loaded.cache$).not.exists()
+                   
+                   saved.remove$(function(err) {
+                     expect(err).to.not.exist()
+                     done()
+                   })
+                 })
+      })
+    })
+  })
+
+  
   it('handles a number id', function(done) {
     var seneca = seneca_instance()
 

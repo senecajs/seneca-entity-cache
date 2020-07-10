@@ -1,4 +1,4 @@
-/* Copyright © 2012-2019 Richard Rodger and other contributors, MIT License. */
+/* Copyright © 2012-2020 Richard Rodger and other contributors, MIT License. */
 'use strict'
 
 var LRUCache = require('lru-cache')
@@ -88,6 +88,10 @@ function entity_cache(options) {
         }
 
         ++stats.set
+
+        ent.cache$ = ent.cache$ || {}
+        ent.cache$.k = key
+        
         return reply(key)
       }
     )
@@ -113,8 +117,6 @@ function entity_cache(options) {
         result
       ) {
         var version = result && result.value
-
-        // console.log('RESULT', vkey, result)
 
         if (err) {
           ++stats.cache_errs
@@ -156,7 +158,7 @@ function entity_cache(options) {
 
     // Verify id format is compatible
 
-    if (!msg.q.id || Object.keys(msg.q).length !== 1) {
+    if (!msg.q.id || Object.keys(msg.q).length !== 1 || null != msg.q.fields$) {
       return load_prior.call(self, msg, reply)
     }
 
@@ -165,6 +167,7 @@ function entity_cache(options) {
     // Lookup version key
 
     var vkey = intern.make_version_key(qent, id, options.prefix)
+
     this.act({ role: 'cache', cmd: 'get' }, { key: vkey }, function(
       err,
       result
@@ -195,6 +198,8 @@ function entity_cache(options) {
             return reply(err)
           }
 
+          ent.cache$ = {v:vkey}
+          
           writeKey(self, vkey, function(err) {
             if (err) {
               return reply(err)
@@ -217,7 +222,9 @@ function entity_cache(options) {
 
         self.log.debug('hit', 'hot', key)
         ++stats.hot_hit
-        return reply(qent.make$(record))
+        var ent = qent.make$(record)
+        ent.cache$ = {k:key,v:vkey}
+        return reply(ent)
       }
 
       // Entry not found (evicted from hotcache)
@@ -242,7 +249,9 @@ function entity_cache(options) {
           ++stats.net_hit
           hotcache && hotcache.set(key, ent_data)
           self.log.debug('hit', 'net', key)
-          return reply(qent.make$(ent_data))
+          var ent = qent.make$(ent_data)
+          ent.cache$ = { k: key, v: vkey }
+          return reply(ent)
         }
 
         // Not found (upstream)
@@ -255,6 +264,7 @@ function entity_cache(options) {
             return reply(err)
           }
           return writeData(self, ent, version, function(err) {
+            ent.cache$.v = vkey
             return reply(err || ent)
           })
         })
