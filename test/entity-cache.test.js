@@ -1,6 +1,8 @@
 /* Copyright © 2012-2019 Richard Rodger and other contributors, MIT License. */
 
+
 // NOTE: runs multiple times (via package.json script) to test multiple cache servers
+// needs memcached and redis running for tests
 
 // Load modules
 
@@ -413,8 +415,8 @@ it('updates a record', function(done) {
 describe('save()', function() {
   it('handles errors in upstream cache (incr)', function(done) {
     var seneca = Seneca()
-      .test()
-      .quiet()
+        .test()
+        .quiet()
     seneca.use('entity')
     seneca.use('./broken')
     seneca.use(EntityCache)

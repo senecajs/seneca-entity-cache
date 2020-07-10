@@ -1,6 +1,8 @@
 var SenecaCache = require('@seneca/' +
   (process.env.SENECA_CACHE_PLUGIN || 'memcached-cache'))
 
+//console.log(SenecaCache)
+
 module.exports = function(options) {
   var seneca = this
   var control = { broken: true }
@@ -35,7 +37,6 @@ module.exports = function(options) {
 
   var result = SenecaCache.call(seneca, options)
 
-  //result.name = 'cache'
   result.exports = {
     control: control
   }

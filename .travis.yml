@@ -1,17 +1,18 @@
 language: node_js
-sudo: false
-
-env:
-  - SENECA_VER=senecajs/seneca
-
-node_js:
-  - "11"
-  - "10"
-  - "8"
-
 services:
   - memcached
   - redis-server
+
+env:
+  - SENECA_VER=senecajs/seneca
+  - SENECA_VER=plugin
+
+node_js:
+  - "10"
+  - "12"
+  - "13"
+  - "14"
+
 
 before_script:
   - npm uninstall seneca
