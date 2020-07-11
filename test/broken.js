@@ -13,12 +13,7 @@ module.exports = function (options) {
     orig.call(seneca, criteria, function (args, callback, meta) {
       //console.log('BROKEN', control, criteria)
 
-      if (
-        criteria.role &&
-        criteria.role === 'cache' &&
-        control &&
-        control[criteria.cmd]
-      ) {
+      if (criteria.role && criteria.role === 'cache' && control[criteria.cmd]) {
         if (control[criteria.cmd] === true) {
           return callback(new Error('Invalid implementation'))
         }

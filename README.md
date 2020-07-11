@@ -5,6 +5,11 @@
 [![Npm][BadgeNpm]][Npm]
 [![Travis][BadgeTravis]][Travis]
 [![Coveralls][BadgeCoveralls]][Coveralls]
+[![Maintainability](https://api.codeclimate.com/v1/badges/fcf0b82a1fc420fe7c33/maintainability)](https://codeclimate.com/github/senecajs/seneca-entity-cache/maintainability)
+[![DeepScan grade](https://deepscan.io/api/teams/5016/projects/12818/branches/203965/badge/grade.svg)](https://deepscan.io/dashboard#view=project&tid=5016&pid=12818&bid=203965)
+[![dependencies Status](https://david-dm.org/senecajs/seneca-entity-cache/status.svg)](https://david-dm.org/senecajs/seneca-entity-cache)
+[![Gitter][gitter-badge]][gitter-url]
+
 
 
 ### Node.js Seneca Versioned Caching module
@@ -135,3 +140,5 @@ node n2.js --seneca.log=type:plugin
 [Coveralls]: https://coveralls.io/github/senecajs/seneca-entity-cache?branch=master
 [Npm]: https://www.npmjs.com/package/seneca-entity-cache
 [Travis]: https://travis-ci.org/senecajs/seneca-entity-cache?branch=master
+[gitter-badge]: https://badges.gitter.im/Join%20Chat.svg
+[gitter-url]: https://gitter.im/senecajs/seneca

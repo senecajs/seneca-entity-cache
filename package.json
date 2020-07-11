@@ -1,6 +1,6 @@
 {
   "name": "@seneca/entity-cache",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "description": "Versioned caching plugin for seneca",
   "main": "entity-cache.js",
   "scripts": {
@@ -39,7 +39,7 @@
   "devDependencies": {
     "@hapi/code": "^8.0.1",
     "@hapi/lab": "^22.0.4",
-    "@seneca/cache": "^4.2.0",
+    "@seneca/cache": "^4.2.1",
     "@seneca/memcached-cache": "^2.0.0",
     "@seneca/redis-cache": "^1.0.1",
     "coveralls": "^3.1.0",
