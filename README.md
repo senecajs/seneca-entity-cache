@@ -65,6 +65,32 @@ The unit tests require a running memcached and redis.
 
 
 <!--START:options-->
+
+
+## Options
+
+* `prefix` : string <i><small>"SE"</small></i>
+* `maxhot` : number <i><small>1111</small></i>
+* `maxage` : number <i><small>22222</small></i>
+* `expires` : number <i><small>3600</small></i>
+* `hot` : boolean <i><small>true</small></i>
+
+
+Set plugin options when loading with:
+```js
+
+
+seneca.use('entity-cache', { name: value, ... })
+
+
+```
+
+
+<small>Note: <code>foo.bar</code> in the list above means 
+<code>{ foo: { bar: ... } }</code></small> 
+
+
+
 <!--END:options-->
 
 
@@ -73,7 +99,9 @@ The unit tests require a running memcached and redis.
 
 ## Action Patterns
 
-* [cmd:stats,plugin:entity-cache](#-cmdstatspluginentity-cache-)
+* [clear:hot-keys,plugin:entity-cache](#-clearhotkeyspluginentitycache-)
+* [get:stats,plugin:entity-cache](#-getstatspluginentitycache-)
+* [list:hot-keys,plugin:entity-cache](#-listhotkeyspluginentitycache-)
 
 
 <!--END:action-list-->
@@ -83,7 +111,21 @@ The unit tests require a running memcached and redis.
 
 ## Action Descriptions
 
-### &laquo; `cmd:stats,plugin:entity-cache` &raquo;
+### &laquo; `clear:hot-keys,plugin:entity-cache` &raquo;
+
+No description provided.
+
+
+
+----------
+### &laquo; `get:stats,plugin:entity-cache` &raquo;
+
+No description provided.
+
+
+
+----------
+### &laquo; `list:hot-keys,plugin:entity-cache` &raquo;
 
 No description provided.
 

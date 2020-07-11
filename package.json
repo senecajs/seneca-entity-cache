@@ -1,6 +1,6 @@
 {
   "name": "@seneca/entity-cache",
-  "version": "1.1.0",
+  "version": "1.2.2",
   "description": "Versioned caching plugin for seneca",
   "main": "entity-cache.js",
   "scripts": {
@@ -13,7 +13,7 @@
     "repo-tag": "REPO_VERSION=`node -e \"console.log(require('./package').version)\"` && echo TAG: v$REPO_VERSION && git commit -a -m v$REPO_VERSION && git push && git tag v$REPO_VERSION && git push --tags;",
     "reset": "npm run clean && npm i && npm test",
     "repo-publish": "npm run clean && npm install --registry http://registry.npmjs.org && npm run repo-publish-quick",
-    "repo-publish-quick": "npm run prettier && npm test && npm run repo-tag && npm publish --access public"
+    "repo-publish-quick": "npm run prettier && npm test && npm run repo-tag && npm publish --registry http://registry.npmjs.org --access public"
   },
   "repository": {
     "type": "git",
@@ -40,8 +40,8 @@
     "@hapi/code": "^8.0.1",
     "@hapi/lab": "^22.0.4",
     "@seneca/cache": "^4.2.1",
-    "@seneca/memcached-cache": "^2.0.0",
-    "@seneca/redis-cache": "^1.0.1",
+    "@seneca/memcached-cache": "^2.1.3",
+    "@seneca/redis-cache": "^2.0.2",
     "coveralls": "^3.1.0",
     "prettier": "^2.0.5",
     "seneca": "plugin",
