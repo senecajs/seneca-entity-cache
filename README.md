@@ -58,11 +58,9 @@ Or... you can use <a href="http://redis.io">redis</a>: <a href="https://github.c
 The unit tests require a running memcached and redis.
 
 
-## Actions
 
-### _plugin:entity-cache, cmd:stats_
-
-Returns a JSON object containing the current hit/miss counts of the cache.
+<!--START:options-->
+<!--END:options-->
 
 
 <!--START:action-list-->
