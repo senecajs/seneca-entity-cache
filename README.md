@@ -10,7 +10,8 @@
 [![dependencies Status](https://david-dm.org/senecajs/seneca-entity-cache/status.svg)](https://david-dm.org/senecajs/seneca-entity-cache)
 [![Gitter][gitter-badge]][gitter-url]
 
-
+| ![Voxgig](https://www.voxgig.com/res/img/vgt01r.png) | This open source module is sponsored and supported by [Voxgig](https://www.voxgig.com). |
+|---|---|
 
 ### Node.js Seneca Versioned Caching module
 
