@@ -2,46 +2,8 @@
 
 [Seneca](http://senecajs.org) plugin providing simple id-based distributed entity caching.
 
-[![Npm][BadgeNpm]][Npm]
-[![Travis][BadgeTravis]][Travis]
-[![Coveralls][BadgeCoveralls]][Coveralls]
-[![Maintainability](https://api.codeclimate.com/v1/badges/fcf0b82a1fc420fe7c33/maintainability)](https://codeclimate.com/github/senecajs/seneca-entity-cache/maintainability)
-[![DeepScan grade](https://deepscan.io/api/teams/5016/projects/12818/branches/203965/badge/grade.svg)](https://deepscan.io/dashboard#view=project&tid=5016&pid=12818&bid=203965)
-[![dependencies Status](https://david-dm.org/senecajs/seneca-entity-cache/status.svg)](https://david-dm.org/senecajs/seneca-entity-cache)
-[![Gitter][gitter-badge]][gitter-url]
-
-
-
-### Node.js Seneca Versioned Caching module
-
-This module is a plugin for the [Seneca framework](http://senecajs.org). 
-It provides a data caching mechanism for [Seneca data entities](http://senecajs.org/data-entities.html).
-Using this module will give your Seneca app a big performance boost.
-
-The caching mechanism goes beyond simple key-based caching using
-memcached.  In addition, a smaller "hot" cache is maintained within the
-Node process. Data entities are given transient version numbers, and
-these are used to synchronize the hot cache with memcached.
-
-This plays nicely with multiple memcached instances, and allows Seneca apps to scale.
-
-(See <a href="http://www.amazon.com/Beginning-Mobile-Application-Development-Cloud/dp/1118034694">chapter 8 of my book for details</a>, or read <i><a href="http://37signals.com/svn/posts/3113-how-key-based-cache-expiration-works">How key-based cache expiration works</a></i>)
-
-
-
-
-### Quick example
-
-This module works by wrapping the data entity actions (<i>role:entity, cmd:save, ...</i> etc). You just need to register it:
-
-```JavaScript
-var seneca = require('seneca')()
-seneca.use('memcached-cache')
-seneca.use('entity-cache')
-```
-
-Then just use data entities as normal. Except things will be a lot faster.
-
+| ![Voxgig](https://www.voxgig.com/res/img/vgt01r.png) | This open source module is sponsored and supported by [Voxgig](https://www.voxgig.com). |
+|---|---|
 
 ## Install
 
@@ -57,17 +19,42 @@ You'll also need [memcached](http://memcached.org/)
 
 Or... you can use <a href="http://redis.io">redis</a>: <a href="https://github.com/darsee/seneca-redis-cache">seneca-redis-cache</a>.
 
+## Quick Example
 
-## Testing
+This module works by wrapping the data entity actions (<i>role:entity, cmd:save, ...</i> etc). You just need to register it:
 
-The unit tests require a running memcached and redis.
+```JavaScript
+var seneca = require('seneca')()
+seneca.use('memcached-cache')
+seneca.use('entity-cache')
+```
 
+Then just use data entities as normal. Except things will be a lot faster.
 
+## More Examples
 
-<!--START:options-->
+See [test/](test/) for usage examples.
 
+## Motivation
 
-## Options
+This module is a plugin for the [Seneca framework](http://senecajs.org). 
+It provides a data caching mechanism for [Seneca data entities](http://senecajs.org/data-entities.html).
+Using this module will give your Seneca app a big performance boost.
+
+The caching mechanism goes beyond simple key-based caching using
+memcached.  In addition, a smaller "hot" cache is maintained within the
+Node process. Data entities are given transient version numbers, and
+these are used to synchronize the hot cache with memcached.
+
+This plays nicely with multiple memcached instances, and allows Seneca apps to scale.
+
+(See <a href="http://www.amazon.com/Beginning-Mobile-Application-Development-Cloud/dp/1118034694">chapter 8 of my book for details</a>, or read <i><a href="http://37signals.com/svn/posts/3113-how-key-based-cache-expiration-works">How key-based cache expiration works</a></i>)
+
+## Support
+
+If you are having difficulty, open an issue on the GitHub repo.
+
+## API
 
 * `prefix` : string <i><small>"SE"</small></i>
 * `maxhot` : number <i><small>1111</small></i>
@@ -96,9 +83,6 @@ seneca.use('entity-cache', { name: value, ... })
 
 <!--START:action-list-->
 
-
-## Action Patterns
-
 * [clear:hot-keys,plugin:entity-cache](#-clearhotkeyspluginentitycache-)
 * [get:stats,plugin:entity-cache](#-getstatspluginentitycache-)
 * [list:hot-keys,plugin:entity-cache](#-listhotkeyspluginentitycache-)
@@ -107,9 +91,6 @@ seneca.use('entity-cache', { name: value, ... })
 <!--END:action-list-->
 
 <!--START:action-desc-->
-
-
-## Action Descriptions
 
 ### &laquo; `clear:hot-keys,plugin:entity-cache` &raquo;
 
@@ -157,8 +138,17 @@ Where:
    * _maxhot_: the maximum number of hot items to store in the running node process memory
    * _expires_: how long to store items (in seconds)
 
+## Contributing
 
-## Test
+The [Senecajs org](https://github.com/senecajs/) encourages open participation. If you feel you can help in any way, be it with documentation, examples, extra testing, or new features please get in touch.
+
+### Running tests
+
+The unit tests require a running memcached and redis.
+
+
+
+<!--START:options-->
 
 ```bash
 cd test
@@ -176,6 +166,27 @@ node n2.js --seneca.log=type:plugin
 ```
 
 
+[BadgeCoveralls]: https://coveralls.io/repos/senecajs/seneca-entity-cache/badge.svg?branch=master&service=github
+[BadgeNpm]: https://badge.fury.io/js/%40seneca%2Fentity-cache.svg
+[BadgeTravis]: https://travis-ci.org/senecajs/seneca-entity-cache.svg?branch=master
+[Coveralls]: https://coveralls.io/github/senecajs/seneca-entity-cache?branch=master
+[Npm]: https://www.npmjs.com/package/seneca-entity-cache
+[Travis]: https://travis-ci.org/senecajs/seneca-entity-cache?branch=master
+[gitter-badge]: https://badges.gitter.im/Join%20Chat.svg
+[gitter-url]: https://gitter.im/senecajs/seneca
+
+## Background
+
+This plugin provides id-based distributed entity caching for the Seneca framework.
+
+[Seneca](http://senecajs.org) plugin providing simple id-based distributed entity caching.
+[![Npm][BadgeNpm]][Npm]
+[![Travis][BadgeTravis]][Travis]
+[![Coveralls][BadgeCoveralls]][Coveralls]
+[![Maintainability](https://api.codeclimate.com/v1/badges/fcf0b82a1fc420fe7c33/maintainability)](https://codeclimate.com/github/senecajs/seneca-entity-cache/maintainability)
+[![DeepScan grade](https://deepscan.io/api/teams/5016/projects/12818/branches/203965/badge/grade.svg)](https://deepscan.io/dashboard#view=project&tid=5016&pid=12818&bid=203965)
+[![dependencies Status](https://david-dm.org/senecajs/seneca-entity-cache/status.svg)](https://david-dm.org/senecajs/seneca-entity-cache)
+[![Gitter][gitter-badge]][gitter-url]
 [BadgeCoveralls]: https://coveralls.io/repos/senecajs/seneca-entity-cache/badge.svg?branch=master&service=github
 [BadgeNpm]: https://badge.fury.io/js/%40seneca%2Fentity-cache.svg
 [BadgeTravis]: https://travis-ci.org/senecajs/seneca-entity-cache.svg?branch=master
